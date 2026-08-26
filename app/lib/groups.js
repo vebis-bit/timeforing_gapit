@@ -13,6 +13,18 @@ const BLOB_PATH = "groups.json";
 // data/groups.json som før.
 const useBlob = Boolean(process.env.BLOB_READ_WRITE_TOKEN);
 
+// På Vercel finnes det ikke noe varig filsystem. Hvis Blob-tokenet mangler der,
+// vil filsystem-fallbacken se ut til å lykkes, men dataen forsvinner mellom kall.
+// Da er det bedre å feile tydelig så admin-siden viser en ekte feilmelding.
+function assertBackend() {
+  if (process.env.VERCEL && !useBlob) {
+    throw new Error(
+      "Vercel Blob er ikke satt opp: BLOB_READ_WRITE_TOKEN mangler. Opprett en " +
+        "Blob-store i Vercel (Storage), koble den til prosjektet, og redeploy."
+    );
+  }
+}
+
 const EMPTY = { groups: [] };
 
 function normalize(raw) {
@@ -84,10 +96,12 @@ async function writeToBlob(data) {
 }
 
 export async function readGroups() {
+  assertBackend();
   return useBlob ? readFromBlob() : readFromFile();
 }
 
 export async function writeGroups(raw) {
+  assertBackend();
   const data = normalize(raw);
   return useBlob ? writeToBlob(data) : writeToFile(data);
 }
