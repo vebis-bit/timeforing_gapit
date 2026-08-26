@@ -1,9 +1,17 @@
 import { randomUUID } from "node:crypto";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
+import { list, put } from "@vercel/blob";
 
 const DATA_DIR = path.join(process.cwd(), "data");
 const GROUPS_FILE = path.join(DATA_DIR, "groups.json");
+const BLOB_PATH = "groups.json";
+
+// På Vercel er filsystemet skrivebeskyttet i produksjon, så gruppene lagres i
+// Vercel Blob når BLOB_READ_WRITE_TOKEN finnes (injiseres automatisk når en
+// Blob-store er koblet til prosjektet). Lokalt uten token faller vi tilbake til
+// data/groups.json som før.
+const useBlob = Boolean(process.env.BLOB_READ_WRITE_TOKEN);
 
 const EMPTY = { groups: [] };
 
@@ -38,7 +46,7 @@ function normalize(raw) {
   };
 }
 
-export async function readGroups() {
+async function readFromFile() {
   try {
     const text = await readFile(GROUPS_FILE, "utf8");
     return normalize(JSON.parse(text));
@@ -48,9 +56,38 @@ export async function readGroups() {
   }
 }
 
-export async function writeGroups(raw) {
-  const data = normalize(raw);
+async function writeToFile(data) {
   await mkdir(DATA_DIR, { recursive: true });
   await writeFile(GROUPS_FILE, `${JSON.stringify(data, null, 2)}\n`, "utf8");
   return data;
+}
+
+async function readFromBlob() {
+  const { blobs } = await list({ prefix: BLOB_PATH });
+  const match = blobs.find((blob) => blob.pathname === BLOB_PATH);
+  if (!match) return { ...EMPTY };
+  const response = await fetch(match.url, { cache: "no-store" });
+  if (!response.ok) {
+    throw new Error(`Klarte ikke å lese grupper fra Blob (${response.status}).`);
+  }
+  return normalize(await response.json());
+}
+
+async function writeToBlob(data) {
+  await put(BLOB_PATH, `${JSON.stringify(data, null, 2)}\n`, {
+    access: "public",
+    contentType: "application/json",
+    addRandomSuffix: false,
+    allowOverwrite: true
+  });
+  return data;
+}
+
+export async function readGroups() {
+  return useBlob ? readFromBlob() : readFromFile();
+}
+
+export async function writeGroups(raw) {
+  const data = normalize(raw);
+  return useBlob ? writeToBlob(data) : writeToFile(data);
 }

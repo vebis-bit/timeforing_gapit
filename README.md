@@ -50,7 +50,8 @@ ansatt (`app/lib/timestats.js`), men vises ikke lenger på forsiden.
   Sesjonen ligger i en signert, httpOnly-cookie.
 - Innlogget: opprett grupper, endre gruppenavn, legg til / fjern personer, og
   utpeke én **kaptein** per gruppe (må være medlem av gruppa). Endringer lagres
-  i `data/groups.json` i prosjektet. På forsiden vises ingen personnavn – hver
+  i Vercel Blob i produksjon, og i `data/groups.json` lokalt (se «Lagring av
+  grupper» under). På forsiden vises ingen personnavn – hver
   ansatt er bare en sirkel med initialer, og kapteinen markeres med ★ på sirkelen.
 - Øverst på adminsiden ligger lista **«Ikke plassert i en gruppe»** – alle aktive
   ansatte som ikke er i noen gruppe, hver med et nedtrekk for å legge dem rett i
@@ -67,9 +68,29 @@ ansatt (`app/lib/timestats.js`), men vises ikke lenger på forsiden.
   «— inaktiv, bør fjernes» i admin.
 - Når man er innlogget vises «admin» øverst til høyre (også på forsiden).
 
-> Merk: `data/groups.json` er en fil i prosjektet. Den overlever ikke en ny
-> Vercel-deploy og deles ikke mellom serverinstanser. For delt/varig lagring må
-> `app/lib/groups.js` byttes til en database / Vercel KV.
+## Lagring av grupper
+
+`app/lib/groups.js` velger lager automatisk:
+
+- **Med `BLOB_READ_WRITE_TOKEN` satt** (produksjon på Vercel): gruppene leses og
+  skrives til Vercel Blob under objektet `groups.json`.
+- **Uten token** (lokal `npm run dev`): fallback til fila `data/groups.json` i
+  prosjektet, akkurat som før.
+
+Sette opp Blob på Vercel:
+
+1. Vercel-dashbordet → prosjektet → **Storage** → **Create Database** → **Blob** →
+   koble den til prosjektet. Vercel legger da `BLOB_READ_WRITE_TOKEN` inn som
+   miljøvariabel automatisk (Production + Preview + Development).
+2. Deploy på nytt. Blob-storen starter tom, så forsiden viser «Ingen grupper er
+   satt opp ennå» til gruppene er lagret én gang.
+3. Logg inn på `/admin` og trykk lagre (eller «Autofyll tilfeldig») for å skrive
+   gruppene til Blob. Alternativt: kjør `vercel env pull .env.local` for å hente
+   tokenet lokalt, så vil `npm run dev` skrive rett til Blob.
+
+> Blob-objekter ligger på en offentlig, men vanskelig å gjette URL. Innholdet er
+> lagnavn + interne ansatt-ID-er. Vil du unngå offentlig URL helt, bruk Upstash
+> Redis / en database i stedet.
 
 ## Lokal kjøring
 
@@ -92,4 +113,5 @@ TRIPLETEX_API_BASE             # https://tripletex.no/v2
 ADMIN_USERNAME
 ADMIN_PASSWORD
 ADMIN_SESSION_SECRET          # lang tilfeldig streng
+BLOB_READ_WRITE_TOKEN        # settes automatisk av Vercel Blob; utelates lokalt
 ```
