@@ -1,8 +1,10 @@
 import Link from "next/link";
 import BrandMark from "./BrandMark";
+import MonthPicker from "./MonthPicker";
 import { isAdmin } from "./lib/auth";
 import { readGroups } from "./lib/groups";
 import { getRegistrationScore, scoreForMembers } from "./lib/score";
+import { osloDateParts } from "./lib/tripletex";
 import { Analytics } from "@vercel/analytics/next";
 
 const MEDALS = ["🥇", "🥈", "🥉"];
@@ -136,13 +138,37 @@ function RankColumn({ variant, title, subtitle, entries, periodKey, showBar = fa
   );
 }
 
-export default async function Home() {
+// Inneværende måned + de 12 foregående, til nedtrekket i topplinja.
+function monthChoices() {
+  const { year, month } = osloDateParts();
+  const fmt = new Intl.DateTimeFormat("nb-NO", {
+    month: "long",
+    year: "numeric",
+    timeZone: "Europe/Oslo"
+  });
+  const list = [];
+  for (let i = 0; i <= 12; i++) {
+    const d = new Date(Date.UTC(Number(year), Number(month) - 1 - i, 1));
+    const value = `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}`;
+    list.push({ value: i === 0 ? "" : value, label: i === 0 ? "Denne måneden" : fmt.format(d) });
+  }
+  return list;
+}
+
+export default async function Home({ searchParams }) {
   const admin = await isAdmin();
+
+  const params = (await searchParams) || {};
+  const rawMonth = typeof params.month === "string" ? params.month : null;
+  const { year: nowY, month: nowM } = osloDateParts();
+  const monthParam =
+    rawMonth && /^\d{4}-\d{2}$/.test(rawMonth) && rawMonth < `${nowY}-${nowM}` ? rawMonth : null;
+  const choices = monthChoices();
 
   let score = null;
   let error = null;
   try {
-    score = await getRegistrationScore();
+    score = await getRegistrationScore({ month: monthParam });
   } catch (caught) {
     error = caught;
   }
@@ -210,6 +236,7 @@ export default async function Home() {
           </h1>
         </div>
         <div className="top-actions">
+          <MonthPicker choices={choices} value={monthParam || ""} />
           {admin ? (
             <Link className="badge" href="/admin">
               admin
@@ -253,37 +280,44 @@ export default async function Home() {
                 <h2>{score.monthLabel}</h2>
                 <span>
                   Poeng for timer ført i tide (samme dag eller dagen før) ·{" "}
-                  {score.workdays} virkedager hittil · månedsvinner kåres ved månedsslutt
+                  {score.workdays} virkedager
+                  {score.historical
+                    ? " · ferdig måned"
+                    : " hittil · månedsvinner kåres ved månedsslutt"}
                 </span>
               </div>
             </div>
             {totalPunctuality != null ? (
               <TotalBar value={totalPunctuality} prevValue={prevPunctuality} />
             ) : null}
-            <div className="rankings">
+            <div className={`rankings${score.historical ? " solo" : ""}`}>
               <RankColumn
                 variant="primary"
                 title="Måneden"
-                subtitle={`Poeng hittil i ${score.monthLabel.toLowerCase()}`}
+                subtitle={`Poeng ${score.historical ? "for" : "hittil i"} ${score.monthLabel.toLowerCase()}`}
                 entries={monthRanked}
                 periodKey="month"
                 prevKey="prev"
                 showBar
               />
-              <RankColumn
-                variant="secondary"
-                title="Denne uka"
-                subtitle="Mandag – i går"
-                entries={weekRanked}
-                periodKey="week"
-              />
-              <RankColumn
-                variant="secondary"
-                title="I går"
-                subtitle="Siste virkedag"
-                entries={yesterdayRanked}
-                periodKey="yesterday"
-              />
+              {!score.historical ? (
+                <>
+                  <RankColumn
+                    variant="secondary"
+                    title="Denne uka"
+                    subtitle="Mandag – i går"
+                    entries={weekRanked}
+                    periodKey="week"
+                  />
+                  <RankColumn
+                    variant="secondary"
+                    title="I går"
+                    subtitle="Siste virkedag"
+                    entries={yesterdayRanked}
+                    periodKey="yesterday"
+                  />
+                </>
+              ) : null}
             </div>
           </section>
         </>

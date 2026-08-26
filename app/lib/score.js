@@ -9,7 +9,8 @@ export const POINTS_PER_ONTIME_DAY = 10;
 const MAX_DAYS_EARLY = 1;
 
 const CACHE_TTL_MS = 10 * 60 * 1000;
-let cache = null;
+// Én cache-nøkkel per måned ("current" for inneværende, ellers "YYYY-MM").
+const cache = new Map();
 
 function pad(n) {
   return String(n).padStart(2, "0");
@@ -87,15 +88,30 @@ function tallyForDays(entries, days) {
   return perEmployee;
 }
 
-async function computeScore() {
-  const today = osloDateParts();
-  const curYear = today.year;
-  const curMonth = today.month;
-  const yesterday = Number(today.day) - 1; // siste talte dag i inneværende måned
+// Bygger poeng for én målmåned. `month` = "YYYY-MM" for en tidligere måned, som
+// telles i sin helhet. null = inneværende måned, som telles t.o.m. i går og som
+// også tar med "denne uka" og "i går".
+async function computeScore(month = null) {
+  const now = osloDateParts();
+  const curYear = Number(now.year);
+  const curMonth = Number(now.month);
+  const curKey = `${now.year}-${now.month}`;
 
-  // Forrige måned
-  let pYear = Number(curYear);
-  let pMonth = Number(curMonth) - 1;
+  let tYear = curYear;
+  let tMonth = curMonth;
+  const historical = Boolean(month && /^\d{4}-\d{2}$/.test(month) && month < curKey);
+  if (historical) {
+    tYear = Number(month.slice(0, 4));
+    tMonth = Number(month.slice(5, 7));
+  }
+
+  const targetLastDay = new Date(Date.UTC(tYear, tMonth, 0)).getUTCDate();
+  // Inneværende måned telles bare t.o.m. i går; tidligere måneder i sin helhet.
+  const lastCountedDay = historical ? targetLastDay : Number(now.day) - 1;
+
+  // Forrige måned relativt til målmåneden (for sammenlikningsstreken).
+  let pYear = tYear;
+  let pMonth = tMonth - 1;
   if (pMonth === 0) {
     pMonth = 12;
     pYear -= 1;
@@ -104,50 +120,70 @@ async function computeScore() {
   const prevMonth = pad(pMonth);
   const prevLastDay = new Date(Date.UTC(pYear, pMonth, 0)).getUTCDate();
 
-  const currentDays = weekdaysInMonth(curYear, curMonth, Math.max(0, yesterday));
+  const targetYear = String(tYear);
+  const targetMonth = pad(tMonth);
+  const targetDays = weekdaysInMonth(targetYear, targetMonth, Math.max(0, lastCountedDay));
   const prevDays = weekdaysInMonth(prevYear, prevMonth, prevLastDay);
 
-  const todayStr = osloDate(new Date());
-  const yesterdayStr = osloDate(new Date(Date.now() - 24 * 60 * 60 * 1000));
+  // Hentevindu: 1. i forrige måned t.o.m. (eksklusiv) dagen etter siste talte dag.
+  const dateFrom = `${prevYear}-${prevMonth}-01`;
+  const dateTo = historical
+    ? osloDate(new Date(Date.UTC(tYear, tMonth - 1, lastCountedDay + 1)))
+    : osloDate(new Date());
 
-  // Virkedager i inneværende ISO-uke, fra mandag t.o.m. i går.
-  const td = new Date(Date.UTC(Number(curYear), Number(curMonth) - 1, Number(today.day)));
-  const mondayStr = osloDate(new Date(td.getTime() - ((td.getUTCDay() + 6) % 7) * 24 * 60 * 60 * 1000));
-  const weekDays = [...prevDays, ...currentDays].filter((ds) => ds >= mondayStr && ds < todayStr);
-
-  // Hent alle føringer fra 1. forrige måned t.o.m. i går (dateTo eksklusiv = i dag).
   const entries = await fetchPaged("/timesheet/entry", {
-    dateFrom: `${prevYear}-${prevMonth}-01`,
-    dateTo: todayStr,
+    dateFrom,
+    dateTo,
     fields: "date,employee(id),hours,changes"
   });
 
-  return {
-    monthLabel: monthName(curYear, curMonth),
-    from: `${curYear}-${curMonth}-01`,
-    to: currentDays[currentDays.length - 1] || `${curYear}-${curMonth}-01`,
-    workdays: currentDays.length,
-    perEmployee: tallyForDays(entries, currentDays),
-    week: {
-      workdays: weekDays.length,
-      perEmployee: tallyForDays(entries, weekDays)
-    },
-    yesterday: {
-      date: yesterdayStr,
-      perEmployee: tallyForDays(entries, [yesterdayStr])
-    },
+  const result = {
+    month: `${targetYear}-${targetMonth}`,
+    historical,
+    monthLabel: monthName(targetYear, targetMonth),
+    from: `${targetYear}-${targetMonth}-01`,
+    to: targetDays[targetDays.length - 1] || `${targetYear}-${targetMonth}-01`,
+    workdays: targetDays.length,
+    perEmployee: tallyForDays(entries, targetDays),
+    week: null,
+    yesterday: null,
     prev: {
       monthLabel: monthName(prevYear, prevMonth),
       workdays: prevDays.length,
       perEmployee: tallyForDays(entries, prevDays)
     }
   };
+
+  if (!historical) {
+    const todayStr = osloDate(new Date());
+    const yesterdayStr = osloDate(new Date(Date.now() - 24 * 60 * 60 * 1000));
+    // Virkedager i inneværende ISO-uke, fra mandag t.o.m. i går.
+    const td = new Date(Date.UTC(curYear, curMonth - 1, Number(now.day)));
+    const mondayStr = osloDate(
+      new Date(td.getTime() - ((td.getUTCDay() + 6) % 7) * 24 * 60 * 60 * 1000)
+    );
+    const weekDays = [...prevDays, ...targetDays].filter(
+      (ds) => ds >= mondayStr && ds < todayStr
+    );
+    result.week = {
+      workdays: weekDays.length,
+      perEmployee: tallyForDays(entries, weekDays)
+    };
+    result.yesterday = {
+      date: yesterdayStr,
+      perEmployee: tallyForDays(entries, [yesterdayStr])
+    };
+  }
+
+  return result;
 }
 
-export async function getRegistrationScore({ force = false } = {}) {
-  if (!force && cache && Date.now() - cache.at < CACHE_TTL_MS) return cache.data;
-  const data = await computeScore();
-  cache = { at: Date.now(), data };
+export async function getRegistrationScore({ force = false, month = null } = {}) {
+  const key = month || "current";
+  const hit = cache.get(key);
+  if (!force && hit && Date.now() - hit.at < CACHE_TTL_MS) return hit.data;
+  const data = await computeScore(month);
+  cache.set(key, { at: Date.now(), data });
   return data;
 }
 
