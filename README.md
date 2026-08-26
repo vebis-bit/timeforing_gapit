@@ -2,7 +2,8 @@
 
 Poengtavle som gamifiserer timeføring i Tripletex: lag samler poeng for hver dag
 en ansatt fører timene sine i tide (samme dag eller dagen før). Next.js
-(App Router). Lagene settes opp på en adminside.
+(App Router). Lagene settes opp på en adminside. Kjøres som Docker-container på
+privat nett; gruppene lagres i `data/groups.json` (montert som volum).
 
 ---
 
@@ -32,7 +33,6 @@ cp .env.example .env.local
 | `TRIPLETEX_API_BASE` | `https://tripletex.no/v2`. |
 | `ADMIN_USERNAME` / `ADMIN_PASSWORD` | Innlogging til `/admin`. |
 | `ADMIN_SESSION_SECRET` | Lang tilfeldig streng. Signerer admin-sesjonscookien. |
-| `BLOB_READ_WRITE_TOKEN` | Valgfri. Settes automatisk av Vercel Blob. Uten den lagres gruppene i `data/groups.json`. |
 
 ### 3a. Kjøre lokalt (Node)
 
@@ -63,16 +63,9 @@ docker build -t gapit .
 docker run -d -p 3000:3000 --env-file .env.local -v gapit-data:/app/data --name gapit gapit
 ```
 
-Uten `BLOB_READ_WRITE_TOKEN` lagres gruppene i det navngitte volumet `gapit-data`
-(`/app/data` i containeren). Se innholdet med
+Gruppene lagres i det navngitte volumet `gapit-data` (`/app/data` i containeren),
+som overlever `down`/`up` og nye bygg. Se innholdet med
 `docker compose exec web cat data/groups.json`.
-
-### 3c. Deploye til Vercel
-
-Push til `main`. `vercel.json` setter framework. Legg inn miljøvariablene i
-prosjektet, og koble på en **privat** Vercel Blob-store for varig gruppelagring –
-da settes `BLOB_READ_WRITE_TOKEN` automatisk. Miljøvariabler bindes ved
-deploy-tidspunkt, så redeploy etter at storen er koblet på.
 
 ---
 
@@ -84,7 +77,6 @@ deploy-tidspunkt, så redeploy etter at storen er koblet på.
 | --- | --- |
 | `package.json` | Avhengigheter og skript: `dev`, `build`, `start`. |
 | `next.config.mjs` | Next-konfig. `output: "standalone"` for Docker-imaget. |
-| `vercel.json` | Forteller Vercel at rammeverket er Next.js. |
 | `Dockerfile` | Flertrinns Docker-bygg → lite standalone-image. |
 | `docker-compose.yml` | Bygg + kjør med `.env.local` og volum for gruppene. |
 | `.dockerignore` | Hva som holdes utenfor Docker-byggekonteksten. |
@@ -125,7 +117,7 @@ deploy-tidspunkt, så redeploy etter at storen er koblet på.
 | --- | --- |
 | `tripletex.js` | Tripletex-klient: sesjonstoken (cachet), paginering, Oslo-datoer, retry. |
 | `auth.js` | Admin-cookie: signering og verifisering, `isAdmin()`. |
-| `groups.js` | Lagring av lag. Vercel Blob når et Blob-token finnes, ellers `data/groups.json`. |
+| `groups.js` | Lagring av lag: leser/skriver `data/groups.json`. |
 | `employees.js` | Henter ansatte og arbeidsforhold fra Tripletex, markerer inaktive. |
 | `holidays.js` | Norske helligdager (`isRedDay`) for å hoppe over røde dager. |
 | `score.js` | Poengmodellen. Henter føringer for målmåneden + måneden før, teller «i tide» per dag og summerer per lag for måned / uke / i går. Cachet i 10 min per måned. |
@@ -134,4 +126,4 @@ deploy-tidspunkt, så redeploy etter at storen er koblet på.
 
 | Fil | Funksjon |
 | --- | --- |
-| `groups.json` | Lagene. Lokalt fallback-lager når Vercel Blob ikke er satt opp. |
+| `groups.json` | Lagene. Eneste datalager – monteres som volum i Docker. |

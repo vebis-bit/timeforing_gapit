@@ -26,7 +26,7 @@ ENV HOSTNAME=0.0.0.0
 # Selvstendig server + statiske filer (fra output: "standalone")
 COPY --from=builder --chown=node:node /app/.next/standalone ./
 COPY --from=builder --chown=node:node /app/.next/static ./.next/static
-# Startverdier for grupper – brukes når Vercel Blob ikke er konfigurert
+# Startverdier for grupper (overstyres av volumet montert på /app/data)
 COPY --from=builder --chown=node:node /app/data ./data
 
 USER node

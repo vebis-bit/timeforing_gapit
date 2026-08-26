@@ -5,7 +5,6 @@ import { isAdmin } from "./lib/auth";
 import { readGroups } from "./lib/groups";
 import { getRegistrationScore, scoreForMembers } from "./lib/score";
 import { osloDateParts } from "./lib/tripletex";
-import { Analytics } from "@vercel/analytics/next";
 
 const MEDALS = ["🥇", "🥈", "🥉"];
 const PUNCTUALITY_GOAL = 80;
@@ -296,7 +295,6 @@ export default async function Home({ searchParams }) {
           </section>
         </>
       )}
-      <Analytics />
     </main>
   );
 }
