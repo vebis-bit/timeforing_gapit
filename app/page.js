@@ -2,6 +2,7 @@ import Link from "next/link";
 import { isAdmin } from "./lib/auth";
 import { readGroups } from "./lib/groups";
 import { getRegistrationScore, scoreForMembers } from "./lib/score";
+import { Analytics } from "@vercel/analytics/next"
 
 const MEDALS = ["🥇", "🥈", "🥉"];
 const PUNCTUALITY_GOAL = 80;
