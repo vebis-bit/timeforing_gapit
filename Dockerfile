@@ -1,6 +1,9 @@
 # syntax=docker/dockerfile:1
 
 # ---------- 1. Avhengigheter ----------
+# npm ci installerer ALT i package.json (lås-fila må stemme). Disse pakkene
+# spores av Next sitt "standalone"-bygg og legges inn i sluttimaget – ingenting
+# installeres på maskinen eller ved oppstart.
 FROM node:22-alpine AS deps
 RUN apk add --no-cache libc6-compat
 WORKDIR /app
@@ -17,6 +20,7 @@ RUN npm run build
 
 # ---------- 3. Kjøring ----------
 FROM node:22-alpine AS runner
+RUN apk add --no-cache libc6-compat
 WORKDIR /app
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1

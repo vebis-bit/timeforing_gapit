@@ -45,26 +45,31 @@ Produksjonsbygg lokalt: `npm run build && npm run start`.
 
 ### 3b. Kjøre i Docker
 
-`next.config.mjs` har `output: "standalone"`, og `Dockerfile` er et
-flertrinnsbygg som gir et lite image uten `node_modules`.
-
-Med Compose (`docker compose` i nyere Docker, `docker-compose` i eldre):
+Alt du trenger er Docker (med motor) + ett skript:
 
 ```bash
-docker compose up -d --build      # bygg og start
-docker compose logs -f            # følg loggen
-docker compose down               # stopp
+./run.sh
 ```
 
-Uten Compose:
+Det oppretter `.env.local` fra malen første gang (fyll inn og kjør på nytt),
+velger riktig Compose-kommando, bygger imaget og starter containeren.
+Appen kjører på http://localhost:3000 og starter automatisk igjen etter omstart
+av maskinen.
+
+Alle avhengigheter installeres **inne i imaget** (`npm ci` + Next
+«standalone»-bygg) – ingenting installeres på maskinen utenom Docker selv.
+
+Manuelt, hvis du heller vil:
 
 ```bash
-docker build -t gapit .
-docker run -d -p 3000:3000 --env-file .env.local -v gapit-data:/app/data --name gapit gapit
+cp .env.example .env.local          # fyll inn
+docker compose up -d --build        # eldre Docker: docker-compose
+docker compose logs -f              # følg loggen
+docker compose down                 # stopp
 ```
 
-Gruppene lagres i det navngitte volumet `gapit-data` (`/app/data` i containeren),
-som overlever `down`/`up` og nye bygg. Se innholdet med
+Gruppene lagres i volumet `gapit-data` (`/app/data` i containeren), som overlever
+`down`/`up` og nye bygg. Se innholdet med
 `docker compose exec web cat data/groups.json`.
 
 ---
@@ -77,8 +82,9 @@ som overlever `down`/`up` og nye bygg. Se innholdet med
 | --- | --- |
 | `package.json` | Avhengigheter og skript: `dev`, `build`, `start`. |
 | `next.config.mjs` | Next-konfig. `output: "standalone"` for Docker-imaget. |
-| `Dockerfile` | Flertrinns Docker-bygg → lite standalone-image. |
-| `docker-compose.yml` | Bygg + kjør med `.env.local` og volum for gruppene. |
+| `run.sh` | Ett-kommando oppstart i Docker: lager `.env.local`, bygger og starter. |
+| `Dockerfile` | Flertrinns Docker-bygg → lite standalone-image med alle pakker. |
+| `docker-compose.yml` | Bygg + kjør med `.env.local`, volum for gruppene, healthcheck. |
 | `.dockerignore` | Hva som holdes utenfor Docker-byggekonteksten. |
 | `.env.example` | Mal for miljøvariabler. Kopieres til `.env.local`. |
 | `.gitignore` | Ignorerte filer (`node_modules`, `.next`, `.env.local`, …). |
