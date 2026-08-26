@@ -25,10 +25,12 @@ føre timer i tide. Lag styres fra en adminside.
 - **Forrige måneds vinner** vises som en egen stripe (🏆), regnet ut fra dagens
   lagsammensetning.
 
-Utseendet er et mørkt «dashboard»-tema (Sora/Inter fra Google Fonts, gradient-
-aksenter, gull for poeng/leder, grønt når 80 %-målet er nådd). Alt ligger i
-`app/globals.css`; framdriftslinjene er `TotalBar` / `MiniBar` / `Track` i
-`app/page.js`.
+Utseendet følger Gapit Nordics' merkevareguide (Design System V2): light mode,
+Poppins fra Google Fonts, Electric Blue (`#1570EF`, Primary/600) på alt
+interaktivt og på framdriftslinjene, grå-skala som fundament, `#039855` (Success)
+når 80 %-målet er nådd, og en dempet oransje (Warning-Minor) for vinner/leder og
+poeng. Alle farger er CSS-variabler øverst i `app/globals.css`; framdriftslinjene
+er `TotalBar` / `MiniBar` / `Track` i `app/page.js`.
 
 **16:9-modus:** gjelder bare forsiden, som har `<main class="page board">`. På
 skjermer ≥ 1024 px bred / 560 px høy låses hele poengtavla til `100vh` uten
