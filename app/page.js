@@ -1,4 +1,5 @@
 import Link from "next/link";
+import BrandMark from "./BrandMark";
 import { isAdmin } from "./lib/auth";
 import { readGroups } from "./lib/groups";
 import { getRegistrationScore, scoreForMembers } from "./lib/score";
@@ -152,7 +153,9 @@ export default async function Home() {
       <header className="topbar">
         <div>
           <p className="eyebrow">Poengtavle</p>
-          <h1>GAPIT</h1>
+          <h1 className="brand">
+            <BrandMark />
+          </h1>
         </div>
         <div className="top-actions">
           {admin ? (

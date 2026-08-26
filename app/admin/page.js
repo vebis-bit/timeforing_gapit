@@ -1,4 +1,5 @@
 import Link from "next/link";
+import BrandMark from "../BrandMark";
 import { isAdmin } from "../lib/auth";
 import AdminGroups from "./AdminGroups";
 import LoginForm from "./LoginForm";
@@ -12,7 +13,9 @@ export default async function AdminPage() {
     <main className="page">
       <header className="topbar">
         <div>
-          <h1>GAPIT</h1>
+          <h1 className="brand">
+            <BrandMark />
+          </h1>
           <p className="eyebrow">
             <Link href="/">← Til forsiden</Link>
           </p>
