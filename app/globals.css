@@ -94,17 +94,54 @@ h1 {
   color: var(--ink);
 }
 
-/* Topplinja: Gapit-logoen i stedet for "GAPIT"-tekst */
+/* Topplinja: full Gapit Nordics-logo i stedet for "GAPIT"-tekst.
+   font-size på .brand-mark styrer størrelsen på hele logolåsen. */
 .brand {
   display: flex;
-  font-size: 0;
-  line-height: 0;
 }
 
 .brand-mark {
-  height: clamp(38px, 7vw, 56px);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55em;
+  font-size: clamp(19px, 3vw, 29px);
+  line-height: 1;
+}
+
+.brand-mark-sym {
+  height: 1.2em;
   width: auto;
   display: block;
+  flex-shrink: 0;
+}
+
+.brand-mark-text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.16em;
+}
+
+.brand-mark-word {
+  font-family: "Poppins", sans-serif;
+  font-weight: 400;
+  font-size: 1em;
+  letter-spacing: -0.015em;
+  color: var(--ink);
+}
+
+.brand-mark-word b {
+  font-weight: 700;
+}
+
+.brand-mark-sub {
+  align-self: center;
+  font-family: "Poppins", sans-serif;
+  font-weight: 400;
+  font-size: 0.33em;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--ink);
+  white-space: nowrap;
 }
 
 h2 {
@@ -775,7 +812,7 @@ h2 {
   }
 
   .board .brand-mark {
-    height: clamp(24px, 4.4vh, 46px);
+    font-size: clamp(15px, 2.5vh, 26px);
   }
 
   .board .prev-winner {
