@@ -7,7 +7,12 @@ export async function GET() {
   if (!(await isAdmin())) {
     return Response.json({ error: "Ikke innlogget." }, { status: 401 });
   }
-  return Response.json(await readGroups());
+  try {
+    return Response.json(await readGroups());
+  } catch (error) {
+    console.error("readGroups feilet:", error);
+    return Response.json({ error: error.message || "Klarte ikke å hente grupper." }, { status: 500 });
+  }
 }
 
 export async function PUT(request) {
@@ -18,5 +23,10 @@ export async function PUT(request) {
   if (!body || !Array.isArray(body.groups)) {
     return Response.json({ error: "Ugyldig data." }, { status: 400 });
   }
-  return Response.json(await writeGroups(body));
+  try {
+    return Response.json(await writeGroups(body));
+  } catch (error) {
+    console.error("writeGroups feilet:", error);
+    return Response.json({ error: error.message || "Lagring feilet." }, { status: 500 });
+  }
 }
