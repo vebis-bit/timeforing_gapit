@@ -88,9 +88,12 @@ Sette opp Blob på Vercel:
    gruppene til Blob. Alternativt: kjør `vercel env pull .env.local` for å hente
    tokenet lokalt, så vil `npm run dev` skrive rett til Blob.
 
-> Blob-objekter ligger på en offentlig, men vanskelig å gjette URL. Innholdet er
-> lagnavn + interne ansatt-ID-er. Vil du unngå offentlig URL helt, bruk Upstash
-> Redis / en database i stedet.
+Storen skal være satt opp med **privat tilgang**. Da lagrer `app/lib/groups.js`
+med `access: "private"` og leser via `get()` med tokenet – blob-en er ikke
+tilgjengelig via en offentlig URL. Kobler du flere Blob-stores til prosjektet får
+tokenet et prefiks (`<store>_BLOB_READ_WRITE_TOKEN`); koden godtar hvilken som
+helst variabel som slutter på `BLOB_READ_WRITE_TOKEN`, men helst bør du ha
+nøyaktig én store med tomt prefiks.
 
 ## Lokal kjøring
 
