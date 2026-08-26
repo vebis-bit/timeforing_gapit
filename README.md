@@ -16,11 +16,10 @@ føre timer i tide. Lag styres fra en adminside.
 
 ## Poengtavla (forsiden)
 
-- **Tre rangeringskolonner** side om side: **Måneden** (hovedfokus – egen blå
-  ramme, større poengtall og en punktlighets-framdriftslinje per lag med strek
-  for forrige måned), **Denne uka** (mandag → i går) og **I går**. Hver kolonne
+- **Tre likestilte rangeringskolonner** side om side, i rekkefølge **I går** →
+  **Denne uka** (mandag → i går) → **Måneden** (lengst til høyre). Hver kolonne
   er en egen rangering sortert på poeng for den perioden; lederen i hver kolonne
-  får 👑.
+  får 👑. Kolonnene ser like ut – ingen er framhevet.
 - **Total andel ført i tide** øverst som en framdriftslinje med strek ved målet
   (80 %) og strek for forrige måneds nivå – linja blir grønn når målet er nådd.
 - **Forrige måneds vinner** vises som en egen stripe (🏆), regnet ut fra dagens

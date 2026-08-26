@@ -423,10 +423,10 @@ h2 {
   opacity: 0.6;
 }
 
-/* ----------------------------------------------------- tre rangeringskolonner */
+/* ------------------------------------------- tre likestilte rangeringskolonner */
 .rankings {
   display: grid;
-  grid-template-columns: 1.6fr 1fr 1fr;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 12px;
   padding: 14px;
 }
@@ -447,20 +447,10 @@ h2 {
   overflow: hidden;
 }
 
-/* Måneden er hovedfokus – tydeligere ramme og blå topp */
-.rank-col.primary {
-  border-color: color-mix(in srgb, var(--accent) 35%, var(--line));
-  box-shadow: 0 0 0 1px color-mix(in srgb, var(--accent) 12%, transparent);
-}
-
 .rank-col-head {
   padding: 12px 14px;
   border-bottom: 1px solid var(--line);
   background: var(--panel-2);
-}
-
-.rank-col.primary .rank-col-head {
-  background: var(--accent-weak);
 }
 
 .rank-col-head h3 {
@@ -471,10 +461,6 @@ h2 {
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--ink);
-}
-
-.rank-col.primary .rank-col-head h3 {
-  color: var(--accent);
 }
 
 .rank-col-head span {
@@ -496,16 +482,10 @@ h2 {
 .rank-row {
   padding: 9px 10px;
   border-radius: 10px;
-  border: 1px solid transparent;
-  background: var(--panel-2);
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.rank-col.primary .rank-row {
+  border: 1px solid var(--line);
   background: var(--panel);
-  border-color: var(--line);
+  display: flex;
+  align-items: center;
 }
 
 .rank-row.leader {
@@ -517,6 +497,8 @@ h2 {
   display: flex;
   align-items: center;
   gap: 10px;
+  flex: 1;
+  min-width: 0;
 }
 
 .rank-pos {
@@ -529,13 +511,9 @@ h2 {
   font-family: "Poppins", sans-serif;
   font-size: 12px;
   font-weight: 600;
-  background: var(--panel);
+  background: var(--panel-2);
   border: 1px solid var(--line);
   color: var(--muted);
-}
-
-.rank-col.primary .rank-pos {
-  background: var(--panel-2);
 }
 
 .rank-row.leader .rank-pos {
@@ -567,18 +545,10 @@ h2 {
 
 .rank-pts strong {
   font-family: "Poppins", sans-serif;
-  font-size: 17px;
+  font-size: 18px;
   font-weight: 600;
   color: var(--gold);
   margin-right: 2px;
-}
-
-.rank-col.primary .rank-pts strong {
-  font-size: 21px;
-}
-
-.rank-row .bar-track {
-  height: 8px;
 }
 
 .rank-empty {
@@ -961,11 +931,11 @@ h2 {
     font-size: clamp(9px, 1vh, 11px);
   }
 
-  /* Tre rangeringskolonner deler bredden; radene deler høyden likt */
+  /* Tre likestilte kolonner deler bredden; radene deler høyden likt */
   .board .rankings {
     flex: 1 1 auto;
     min-height: 0;
-    grid-template-columns: 1.7fr 1fr 1fr;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: clamp(6px, 0.9vw, 14px);
     padding: clamp(6px, 0.9vh, 12px);
     overflow: hidden;
@@ -1031,14 +1001,6 @@ h2 {
   }
 
   .board .rank-pts strong {
-    font-size: clamp(15px, 2.2vh, 30px);
-  }
-
-  .board .rank-col.primary .rank-pts strong {
-    font-size: clamp(17px, 2.7vh, 34px);
-  }
-
-  .board .rank-row .bar-track {
-    height: clamp(5px, 0.9vh, 11px);
+    font-size: clamp(16px, 2.4vh, 32px);
   }
 }

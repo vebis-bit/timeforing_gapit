@@ -80,15 +80,9 @@ function TotalBar({ value, prevValue }) {
 }
 
 // Én rad i en av de tre rangeringene.
-function RankRow({ entry, index, periodKey, showBar, prevKey }) {
+function RankRow({ entry, index, periodKey }) {
   const stat = entry[periodKey];
   const isLeader = index === 0 && stat.points > 0;
-  const hasPct = stat.punctuality != null;
-  const pct = pctOf(stat.punctuality);
-  const prevPct =
-    prevKey && entry[prevKey] && entry[prevKey].punctuality != null
-      ? pctOf(entry[prevKey].punctuality)
-      : null;
   return (
     <li className={`rank-row${isLeader ? " leader" : ""}`}>
       <div className="rank-line">
@@ -98,22 +92,14 @@ function RankRow({ entry, index, periodKey, showBar, prevKey }) {
           <strong>{stat.points}</strong>p
         </span>
       </div>
-      {showBar ? (
-        <Track
-          pct={pct}
-          reached={hasPct && pct >= PUNCTUALITY_GOAL}
-          prevPct={prevPct}
-          hasValue={hasPct}
-        />
-      ) : null}
     </li>
   );
 }
 
-// Én kolonne = én rangering (måned / uke / i går).
-function RankColumn({ variant, title, subtitle, entries, periodKey, showBar = false, prevKey }) {
+// Én kolonne = én likestilt rangering (i går / uka / måneden).
+function RankColumn({ title, subtitle, entries, periodKey }) {
   return (
-    <div className={`rank-col ${variant}`}>
+    <div className="rank-col">
       <div className="rank-col-head">
         <h3>{title}</h3>
         {subtitle ? <span>{subtitle}</span> : null}
@@ -123,14 +109,7 @@ function RankColumn({ variant, title, subtitle, entries, periodKey, showBar = fa
       ) : (
         <ol className="rank-list">
           {entries.map((entry, index) => (
-            <RankRow
-              key={entry.id}
-              entry={entry}
-              index={index}
-              periodKey={periodKey}
-              showBar={showBar}
-              prevKey={prevKey}
-            />
+            <RankRow key={entry.id} entry={entry} index={index} periodKey={periodKey} />
           ))}
         </ol>
       )}
@@ -291,33 +270,28 @@ export default async function Home({ searchParams }) {
               <TotalBar value={totalPunctuality} prevValue={prevPunctuality} />
             ) : null}
             <div className={`rankings${score.historical ? " solo" : ""}`}>
-              <RankColumn
-                variant="primary"
-                title="Måneden"
-                subtitle={`Poeng ${score.historical ? "for" : "hittil i"} ${score.monthLabel.toLowerCase()}`}
-                entries={monthRanked}
-                periodKey="month"
-                prevKey="prev"
-                showBar
-              />
               {!score.historical ? (
                 <>
                   <RankColumn
-                    variant="secondary"
-                    title="Denne uka"
-                    subtitle="Mandag – i går"
-                    entries={weekRanked}
-                    periodKey="week"
-                  />
-                  <RankColumn
-                    variant="secondary"
                     title="I går"
                     subtitle="Siste virkedag"
                     entries={yesterdayRanked}
                     periodKey="yesterday"
                   />
+                  <RankColumn
+                    title="Denne uka"
+                    subtitle="Mandag – i går"
+                    entries={weekRanked}
+                    periodKey="week"
+                  />
                 </>
               ) : null}
+              <RankColumn
+                title="Måneden"
+                subtitle={`Poeng ${score.historical ? "for" : "hittil i"} ${score.monthLabel.toLowerCase()}`}
+                entries={monthRanked}
+                periodKey="month"
+              />
             </div>
           </section>
         </>
