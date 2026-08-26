@@ -8,10 +8,23 @@ const GROUPS_FILE = path.join(DATA_DIR, "groups.json");
 const BLOB_PATH = "groups.json";
 
 // På Vercel er filsystemet skrivebeskyttet i produksjon, så gruppene lagres i
-// Vercel Blob når BLOB_READ_WRITE_TOKEN finnes (injiseres automatisk når en
-// Blob-store er koblet til prosjektet). Lokalt uten token faller vi tilbake til
+// Vercel Blob når et Blob-token finnes (injiseres automatisk når en Blob-store
+// er koblet til prosjektet). Lokalt uten token faller vi tilbake til
 // data/groups.json som før.
-const useBlob = Boolean(process.env.BLOB_READ_WRITE_TOKEN);
+//
+// Kobler man flere Blob-stores til samme prosjekt, får de prefiksede navn som
+// `<store>_BLOB_READ_WRITE_TOKEN`, ikke bare `BLOB_READ_WRITE_TOKEN`. Godta hvilken
+// som helst variabel som slutter på BLOB_READ_WRITE_TOKEN.
+function resolveBlobToken() {
+  if (process.env.BLOB_READ_WRITE_TOKEN) return process.env.BLOB_READ_WRITE_TOKEN;
+  for (const [key, value] of Object.entries(process.env)) {
+    if (value && key.endsWith("BLOB_READ_WRITE_TOKEN")) return value;
+  }
+  return null;
+}
+
+const blobToken = resolveBlobToken();
+const useBlob = Boolean(blobToken);
 
 // På Vercel finnes det ikke noe varig filsystem. Hvis Blob-tokenet mangler der,
 // vil filsystem-fallbacken se ut til å lykkes, men dataen forsvinner mellom kall.
@@ -19,8 +32,8 @@ const useBlob = Boolean(process.env.BLOB_READ_WRITE_TOKEN);
 function assertBackend() {
   if (process.env.VERCEL && !useBlob) {
     throw new Error(
-      "Vercel Blob er ikke satt opp: BLOB_READ_WRITE_TOKEN mangler. Opprett en " +
-        "Blob-store i Vercel (Storage), koble den til prosjektet, og redeploy."
+      "Vercel Blob er ikke satt opp: fant ingen *BLOB_READ_WRITE_TOKEN i miljøet. " +
+        "Koble nøyaktig én Blob-store til prosjektet og redeploy."
     );
   }
 }
@@ -75,7 +88,7 @@ async function writeToFile(data) {
 }
 
 async function readFromBlob() {
-  const { blobs } = await list({ prefix: BLOB_PATH });
+  const { blobs } = await list({ prefix: BLOB_PATH, token: blobToken });
   const match = blobs.find((blob) => blob.pathname === BLOB_PATH);
   if (!match) return { ...EMPTY };
   const response = await fetch(match.url, { cache: "no-store" });
@@ -90,7 +103,8 @@ async function writeToBlob(data) {
     access: "public",
     contentType: "application/json",
     addRandomSuffix: false,
-    allowOverwrite: true
+    allowOverwrite: true,
+    token: blobToken
   });
   return data;
 }
