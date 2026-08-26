@@ -3,7 +3,7 @@ import BrandMark from "./BrandMark";
 import { isAdmin } from "./lib/auth";
 import { readGroups } from "./lib/groups";
 import { getRegistrationScore, scoreForMembers } from "./lib/score";
-import { Analytics } from "@vercel/analytics/next"
+import { Analytics } from "@vercel/analytics/next";
 
 const MEDALS = ["🥇", "🥈", "🥉"];
 const PUNCTUALITY_GOAL = 80;
@@ -77,21 +77,61 @@ function TotalBar({ value, prevValue }) {
   );
 }
 
-// Kompakt linje per lag: [ETIKETT] [====spor====] [verdi]
-function MiniBar({ label, value, prevValue = null }) {
-  const has = value != null;
-  const pct = pctOf(value);
-  const prevPct = prevValue == null ? null : pctOf(prevValue);
-  const reached = has && pct >= PUNCTUALITY_GOAL;
+// Én rad i en av de tre rangeringene.
+function RankRow({ entry, index, periodKey, showBar, prevKey }) {
+  const stat = entry[periodKey];
+  const isLeader = index === 0 && stat.points > 0;
+  const hasPct = stat.punctuality != null;
+  const pct = pctOf(stat.punctuality);
+  const prevPct =
+    prevKey && entry[prevKey] && entry[prevKey].punctuality != null
+      ? pctOf(entry[prevKey].punctuality)
+      : null;
   return (
-    <div
-      className={`mini-bar${reached ? " reached" : ""}`}
-      role="img"
-      aria-label={`${label}: ${has ? `${pct} %` : "ingen føringer"} ført i tide`}
-    >
-      <span className="mini-bar-l">{label}</span>
-      <Track pct={pct} reached={reached} prevPct={prevPct} hasValue={has} />
-      <span className="mini-bar-v">{has ? `${pct}%` : "–"}</span>
+    <li className={`rank-row${isLeader ? " leader" : ""}`}>
+      <div className="rank-line">
+        <span className="rank-pos">{isLeader ? "👑" : MEDALS[index] || index + 1}</span>
+        <span className="rank-name">{entry.name}</span>
+        <span className="rank-pts">
+          <strong>{stat.points}</strong>p
+        </span>
+      </div>
+      {showBar ? (
+        <Track
+          pct={pct}
+          reached={hasPct && pct >= PUNCTUALITY_GOAL}
+          prevPct={prevPct}
+          hasValue={hasPct}
+        />
+      ) : null}
+    </li>
+  );
+}
+
+// Én kolonne = én rangering (måned / uke / i går).
+function RankColumn({ variant, title, subtitle, entries, periodKey, showBar = false, prevKey }) {
+  return (
+    <div className={`rank-col ${variant}`}>
+      <div className="rank-col-head">
+        <h3>{title}</h3>
+        {subtitle ? <span>{subtitle}</span> : null}
+      </div>
+      {entries.length === 0 ? (
+        <p className="rank-empty">Ingen føringer ennå.</p>
+      ) : (
+        <ol className="rank-list">
+          {entries.map((entry, index) => (
+            <RankRow
+              key={entry.id}
+              entry={entry}
+              index={index}
+              periodKey={periodKey}
+              showBar={showBar}
+              prevKey={prevKey}
+            />
+          ))}
+        </ol>
+      )}
     </div>
   );
 }
@@ -109,42 +149,54 @@ export default async function Home() {
 
   const { groups } = await readGroups();
 
-  let ranked = [];
+  let monthRanked = [];
+  let weekRanked = [];
+  let yesterdayRanked = [];
   let prevWinner = null;
   let totalPunctuality = null;
   let prevPunctuality = null;
 
   if (score) {
-    ranked = groups
-      .map((group) => {
-        const memberIds = group.memberIds.map(String);
-        return {
-          id: group.id,
-          name: group.name,
-          score: scoreForMembers(memberIds, score),
-          prevScore: score.prev ? scoreForMembers(memberIds, score.prev) : null,
-          weekScore: score.week ? scoreForMembers(memberIds, score.week) : null,
-          yesterdayScore: score.yesterday ? scoreForMembers(memberIds, score.yesterday) : null
-        };
-      })
-      .sort((a, b) => b.score.points - a.score.points || a.name.localeCompare(b.name, "no"));
+    const rows = groups.map((group) => {
+      const memberIds = group.memberIds.map(String);
+      return {
+        id: group.id,
+        name: group.name,
+        month: scoreForMembers(memberIds, score),
+        week: score.week ? scoreForMembers(memberIds, score.week) : null,
+        yesterday: score.yesterday ? scoreForMembers(memberIds, score.yesterday) : null,
+        prev: score.prev ? scoreForMembers(memberIds, score.prev) : null
+      };
+    });
 
-    const prevRanked = [...ranked]
-      .filter((g) => g.prevScore && g.prevScore.points > 0)
-      .sort((a, b) => b.prevScore.points - a.prevScore.points);
+    // Samme lag, tre uavhengige rangeringer – sortert på poeng for hver periode.
+    const rankBy = (key) =>
+      rows
+        .filter((row) => row[key])
+        .sort(
+          (a, b) => b[key].points - a[key].points || a.name.localeCompare(b.name, "no")
+        );
+
+    monthRanked = rankBy("month");
+    weekRanked = rankBy("week");
+    yesterdayRanked = rankBy("yesterday");
+
+    const prevRanked = rows
+      .filter((row) => row.prev && row.prev.points > 0)
+      .sort((a, b) => b.prev.points - a.prev.points);
     if (prevRanked.length > 0) {
       prevWinner = {
         name: prevRanked[0].name,
-        ...prevRanked[0].prevScore,
+        ...prevRanked[0].prev,
         monthLabel: score.prev.monthLabel
       };
     }
 
-    const tW = ranked.reduce((n, g) => n + g.score.workedDays, 0);
-    const tO = ranked.reduce((n, g) => n + g.score.onTimeDays, 0);
+    const tW = rows.reduce((n, r) => n + r.month.workedDays, 0);
+    const tO = rows.reduce((n, r) => n + r.month.onTimeDays, 0);
     totalPunctuality = tW > 0 ? (tO / tW) * 100 : null;
-    const pW = ranked.reduce((n, g) => n + (g.prevScore?.workedDays ?? 0), 0);
-    const pO = ranked.reduce((n, g) => n + (g.prevScore?.onTimeDays ?? 0), 0);
+    const pW = rows.reduce((n, r) => n + (r.prev?.workedDays ?? 0), 0);
+    const pO = rows.reduce((n, r) => n + (r.prev?.onTimeDays ?? 0), 0);
     prevPunctuality = pW > 0 ? (pO / pW) * 100 : null;
   }
 
@@ -208,36 +260,35 @@ export default async function Home() {
             {totalPunctuality != null ? (
               <TotalBar value={totalPunctuality} prevValue={prevPunctuality} />
             ) : null}
-            <ol className="leaderboard-list">
-              {ranked.map((group, index) => {
-                const isLeader = index === 0 && group.score.points > 0;
-                return (
-                  <li key={group.id} className={`lb-row${isLeader ? " leader" : ""}`}>
-                    <div className="lb-top">
-                      <span className="lb-rank">
-                        {isLeader ? "👑" : MEDALS[index] || index + 1}
-                      </span>
-                      <span className="lb-name">{group.name}</span>
-                      <span className="lb-points">
-                        <strong>{group.score.points}</strong>p
-                      </span>
-                    </div>
-                    <div className="lb-bars">
-                      <MiniBar
-                        label="Måneden"
-                        value={group.score.punctuality}
-                        prevValue={group.prevScore?.punctuality ?? null}
-                      />
-                      <MiniBar label="Uka" value={group.weekScore?.punctuality ?? null} />
-                      <MiniBar label="I går" value={group.yesterdayScore?.punctuality ?? null} />
-                    </div>
-                  </li>
-                );
-              })}
-            </ol>
+            <div className="rankings">
+              <RankColumn
+                variant="primary"
+                title="Måneden"
+                subtitle={`Poeng hittil i ${score.monthLabel.toLowerCase()}`}
+                entries={monthRanked}
+                periodKey="month"
+                prevKey="prev"
+                showBar
+              />
+              <RankColumn
+                variant="secondary"
+                title="Denne uka"
+                subtitle="Mandag – i går"
+                entries={weekRanked}
+                periodKey="week"
+              />
+              <RankColumn
+                variant="secondary"
+                title="I går"
+                subtitle="Siste virkedag"
+                entries={yesterdayRanked}
+                periodKey="yesterday"
+              />
+            </div>
           </section>
         </>
       )}
+      <Analytics />
     </main>
   );
 }

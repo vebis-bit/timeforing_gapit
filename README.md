@@ -16,27 +16,29 @@ føre timer i tide. Lag styres fra en adminside.
 
 ## Poengtavla (forsiden)
 
-- Lag sortert etter poeng for måneden; lederen får 👑, og «månedsvinner kåres ved
-  månedsslutt».
+- **Tre rangeringskolonner** side om side: **Måneden** (hovedfokus – egen blå
+  ramme, større poengtall og en punktlighets-framdriftslinje per lag med strek
+  for forrige måned), **Denne uka** (mandag → i går) og **I går**. Hver kolonne
+  er en egen rangering sortert på poeng for den perioden; lederen i hver kolonne
+  får 👑.
 - **Total andel ført i tide** øverst som en framdriftslinje med strek ved målet
   (80 %) og strek for forrige måneds nivå – linja blir grønn når målet er nådd.
-- Hver lagrad har tre kompakte framdriftslinjer: **Måneden** (med forrige-måned-
-  strek), **Denne uka** (mandag → i går) og **I går**.
 - **Forrige måneds vinner** vises som en egen stripe (🏆), regnet ut fra dagens
   lagsammensetning.
+- Topplinja viser Gapit Nordics-logoen (`app/BrandMark.js`), ikke ren tekst.
 
 Utseendet følger Gapit Nordics' merkevareguide (Design System V2): light mode,
 Poppins fra Google Fonts, Electric Blue (`#1570EF`, Primary/600) på alt
 interaktivt og på framdriftslinjene, grå-skala som fundament, `#039855` (Success)
 når 80 %-målet er nådd, og en dempet oransje (Warning-Minor) for vinner/leder og
-poeng. Alle farger er CSS-variabler øverst i `app/globals.css`; framdriftslinjene
-er `TotalBar` / `MiniBar` / `Track` i `app/page.js`.
+poeng. Alle farger er CSS-variabler øverst i `app/globals.css`; komponentene er
+`TotalBar` / `RankColumn` / `RankRow` / `Track` i `app/page.js`.
 
 **16:9-modus:** gjelder bare forsiden, som har `<main class="page board">`. På
 skjermer ≥ 1024 px bred / 560 px høy låses hele poengtavla til `100vh` uten
-scrolling – lag-radene deler høyden likt (`flex: 1 1 0`), de tre linjene ligger
-ved siden av hverandre, og all tekst skaleres med `vh`/`clamp()` så den holder
-seg lesbar. Testet med 4–8 lag på 1920×1080 og 1366×768. Adminsiden bruker `.page`
+scrolling – de tre kolonnene deler bredden, radene i hver kolonne deler høyden
+likt (`flex: 1 1 0`), og all tekst skaleres med `vh`/`clamp()` så den holder seg
+lesbar. Testet med 4–8 lag på 1920×1080 og 1366×768. Adminsiden bruker `.page`
 uten `.board` og er en helt vanlig, scrollbar side.
 
 Kode: `app/lib/score.js` – ett `/timesheet/entry`-kall dekker forrige + inneværende

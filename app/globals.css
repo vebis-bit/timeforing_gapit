@@ -375,73 +375,126 @@ h2 {
   opacity: 0.6;
 }
 
-/* ------------------------------------------------------------------- rows */
-.leaderboard-list {
-  list-style: none;
-  margin: 0;
+/* ----------------------------------------------------- tre rangeringskolonner */
+.rankings {
+  display: grid;
+  grid-template-columns: 1.6fr 1fr 1fr;
+  gap: 12px;
   padding: 14px;
+}
+
+.rank-col {
   display: flex;
   flex-direction: column;
+  min-width: 0;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--panel);
+  overflow: hidden;
+}
+
+/* Måneden er hovedfokus – tydeligere ramme og blå topp */
+.rank-col.primary {
+  border-color: color-mix(in srgb, var(--accent) 35%, var(--line));
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--accent) 12%, transparent);
+}
+
+.rank-col-head {
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--line);
+  background: var(--panel-2);
+}
+
+.rank-col.primary .rank-col-head {
+  background: var(--accent-weak);
+}
+
+.rank-col-head h3 {
+  margin: 0;
+  font-family: "Poppins", sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink);
+}
+
+.rank-col.primary .rank-col-head h3 {
+  color: var(--accent);
+}
+
+.rank-col-head span {
+  display: block;
+  margin-top: 3px;
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.rank-list {
+  list-style: none;
+  margin: 0;
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.rank-row {
+  padding: 9px 10px;
+  border-radius: 10px;
+  border: 1px solid transparent;
+  background: var(--panel-2);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.rank-col.primary .rank-row {
+  background: var(--panel);
+  border-color: var(--line);
+}
+
+.rank-row.leader {
+  border-color: var(--gold-line);
+  background: var(--gold-weak);
+}
+
+.rank-line {
+  display: flex;
+  align-items: center;
   gap: 10px;
 }
 
-.lb-row {
-  padding: 16px 18px;
-  border-radius: var(--radius);
-  border: 1px solid var(--line);
-  background: var(--panel);
-  display: flex;
-  flex-direction: column;
-  gap: 15px;
-  transition: transform 0.15s ease, border-color 0.15s ease;
-}
-
-.lb-row:hover {
-  transform: translateY(-1px);
-  border-color: var(--accent);
-}
-
-.lb-row.leader {
-  border-color: var(--gold-line);
-  background: var(--gold-weak);
-  box-shadow:
-    0 0 0 1px var(--gold-line),
-    0 14px 30px -18px rgba(247, 144, 9, 0.55);
-}
-
-.lb-top {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-}
-
-.lb-rank {
+.rank-pos {
   flex-shrink: 0;
-  width: 40px;
-  height: 40px;
-  border-radius: 12px;
+  width: 26px;
+  height: 26px;
+  border-radius: 8px;
   display: grid;
   place-items: center;
   font-family: "Poppins", sans-serif;
-  font-size: 16px;
+  font-size: 12px;
   font-weight: 600;
-  background: var(--panel-2);
+  background: var(--panel);
   border: 1px solid var(--line);
   color: var(--muted);
 }
 
-.lb-row.leader .lb-rank {
+.rank-col.primary .rank-pos {
+  background: var(--panel-2);
+}
+
+.rank-row.leader .rank-pos {
   background: var(--gold-500);
   border-color: transparent;
   color: #ffffff;
-  font-size: 20px;
 }
 
-.lb-name {
+.rank-name {
   flex: 1;
   min-width: 0;
   font-family: "Poppins", sans-serif;
-  font-size: 18px;
+  font-size: 14px;
   font-weight: 600;
   color: var(--ink);
   white-space: nowrap;
@@ -449,59 +502,37 @@ h2 {
   text-overflow: ellipsis;
 }
 
-.lb-points {
+.rank-pts {
   flex-shrink: 0;
   white-space: nowrap;
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.05em;
-  color: var(--muted);
-}
-
-.lb-points strong {
-  font-family: "Poppins", sans-serif;
-  font-size: 24px;
-  font-weight: 600;
-  color: var(--gold);
-  margin-right: 3px;
-}
-
-.lb-bars {
-  display: flex;
-  flex-direction: column;
-  gap: 9px;
-}
-
-.mini-bar {
-  display: grid;
-  grid-template-columns: 68px 1fr 42px;
-  align-items: center;
-  gap: 12px;
-}
-
-.mini-bar-l {
   font-size: 10px;
   font-weight: 600;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
+  letter-spacing: 0.04em;
   color: var(--muted);
 }
 
-.mini-bar .bar-track {
-  height: 9px;
-}
-
-.mini-bar-v {
-  text-align: right;
-  white-space: nowrap;
+.rank-pts strong {
   font-family: "Poppins", sans-serif;
-  font-size: 14px;
+  font-size: 17px;
   font-weight: 600;
-  color: var(--ink);
+  color: var(--gold);
+  margin-right: 2px;
 }
 
-.mini-bar.reached .mini-bar-v {
-  color: var(--good);
+.rank-col.primary .rank-pts strong {
+  font-size: 21px;
+}
+
+.rank-row .bar-track {
+  height: 8px;
+}
+
+.rank-empty {
+  margin: 0;
+  padding: 20px 14px;
+  font-size: 12px;
+  color: var(--muted);
+  text-align: center;
 }
 
 /* --------------------------------------------------------------- messages */
@@ -753,6 +784,13 @@ h2 {
 }
 
 /* ------------------------------------------------------------- responsive */
+/* Tre kolonner trenger bredde – stables under ~820 px */
+@media (max-width: 820px) {
+  .rankings {
+    grid-template-columns: 1fr;
+  }
+}
+
 @media (max-width: 620px) {
   .page {
     padding-top: 28px;
@@ -771,15 +809,6 @@ h2 {
 
   .total-bar-num strong {
     font-size: 42px;
-  }
-
-  .mini-bar {
-    grid-template-columns: 58px 1fr 40px;
-    gap: 8px;
-  }
-
-  .lb-name {
-    font-size: 16px;
   }
 }
 
@@ -878,74 +907,79 @@ h2 {
     font-size: clamp(9px, 1vh, 11px);
   }
 
-  .board .leaderboard-list {
+  /* Tre rangeringskolonner deler bredden; radene deler høyden likt */
+  .board .rankings {
     flex: 1 1 auto;
     min-height: 0;
-    display: flex;
-    flex-direction: column;
-    padding: clamp(5px, 0.7vh, 9px);
-    gap: clamp(4px, 0.6vh, 8px);
+    grid-template-columns: 1.7fr 1fr 1fr;
+    gap: clamp(6px, 0.9vw, 14px);
+    padding: clamp(6px, 0.9vh, 12px);
     overflow: hidden;
   }
 
-  .board .lb-row {
+  .board .rank-col {
+    min-height: 0;
+  }
+
+  .board .rank-col-head {
+    flex: 0 0 auto;
+    padding: clamp(5px, 0.9vh, 12px) clamp(8px, 1vw, 14px);
+  }
+
+  .board .rank-col-head h3 {
+    font-size: clamp(10px, 1.5vh, 14px);
+  }
+
+  .board .rank-col-head span {
+    margin-top: 1px;
+    font-size: clamp(9px, 1.1vh, 12px);
+  }
+
+  .board .rank-list {
+    flex: 1 1 auto;
+    min-height: 0;
+    padding: clamp(4px, 0.6vh, 8px);
+    gap: clamp(3px, 0.5vh, 7px);
+    overflow: hidden;
+  }
+
+  .board .rank-row {
     flex: 1 1 0;
     min-height: 0;
     overflow: hidden;
     justify-content: center;
-    gap: clamp(3px, 0.7vh, 10px);
-    padding: clamp(4px, 0.8vh, 12px) clamp(14px, 1.5vw, 22px);
+    gap: clamp(3px, 0.6vh, 8px);
+    padding: clamp(3px, 0.7vh, 10px) clamp(6px, 0.8vw, 12px);
   }
 
-  .board .lb-top {
-    gap: clamp(10px, 1.3vw, 18px);
+  .board .rank-line {
+    gap: clamp(6px, 0.8vw, 12px);
   }
 
-  .board .lb-rank {
-    width: clamp(30px, 3.9vh, 46px);
-    height: clamp(30px, 3.9vh, 46px);
-    border-radius: clamp(8px, 1.1vh, 13px);
-    font-size: clamp(14px, 1.9vh, 22px);
+  .board .rank-pos {
+    width: clamp(22px, 3vh, 34px);
+    height: clamp(22px, 3vh, 34px);
+    border-radius: clamp(6px, 0.9vh, 10px);
+    font-size: clamp(11px, 1.5vh, 17px);
   }
 
-  .board .lb-row.leader .lb-rank {
-    font-size: clamp(16px, 2.4vh, 28px);
+  .board .rank-name {
+    font-size: clamp(12px, 1.9vh, 24px);
   }
 
-  .board .lb-name {
-    font-size: clamp(16px, 2.3vh, 30px);
+  .board .rank-pts {
+    font-size: clamp(9px, 1vh, 12px);
   }
 
-  .board .lb-points {
-    font-size: clamp(10px, 1.2vh, 13px);
+  .board .rank-pts strong {
+    font-size: clamp(15px, 2.2vh, 30px);
   }
 
-  .board .lb-points strong {
-    font-size: clamp(20px, 3vh, 40px);
+  .board .rank-col.primary .rank-pts strong {
+    font-size: clamp(17px, 2.7vh, 34px);
   }
 
-  /* De tre linjene ved siden av hverandre, ikke stablet */
-  .board .lb-bars {
-    flex-direction: row;
-    gap: clamp(14px, 1.8vw, 40px);
-  }
-
-  .board .lb-bars .mini-bar {
-    flex: 1 1 0;
-    min-width: 0;
-    grid-template-columns: clamp(58px, 5.5vw, 96px) minmax(0, 1fr) clamp(42px, 3.4vw, 60px);
-    gap: clamp(8px, 0.9vw, 14px);
-  }
-
-  .board .mini-bar-l {
-    font-size: clamp(10px, 1.3vh, 14px);
-  }
-
-  .board .mini-bar .bar-track {
-    height: clamp(6px, 1.1vh, 12px);
-  }
-
-  .board .mini-bar-v {
-    font-size: clamp(13px, 1.9vh, 22px);
+  .board .rank-row .bar-track {
+    height: clamp(5px, 0.9vh, 11px);
   }
 }
