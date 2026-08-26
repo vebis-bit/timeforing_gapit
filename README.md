@@ -30,6 +30,13 @@ aksenter, gull for poeng/leder, grønt når 80 %-målet er nådd). Alt ligger i
 `app/globals.css`; framdriftslinjene er `TotalBar` / `MiniBar` / `Track` i
 `app/page.js`.
 
+**16:9-modus:** gjelder bare forsiden, som har `<main class="page board">`. På
+skjermer ≥ 1024 px bred / 560 px høy låses hele poengtavla til `100vh` uten
+scrolling – lag-radene deler høyden likt (`flex: 1 1 0`), de tre linjene ligger
+ved siden av hverandre, og all tekst skaleres med `vh`/`clamp()` så den holder
+seg lesbar. Testet med 4–8 lag på 1920×1080 og 1366×768. Adminsiden bruker `.page`
+uten `.board` og er en helt vanlig, scrollbar side.
+
 Kode: `app/lib/score.js` – ett `/timesheet/entry`-kall dekker forrige + inneværende
 måned, og tallies for måned / uke / i går / forrige måned. Caches i 10 minutter.
 Session-token lages med `createSessionToken()` (cachet ~55 min).

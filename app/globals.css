@@ -694,3 +694,170 @@ h2 {
     font-size: 16px;
   }
 }
+
+/* ---------------------------------------------------------------------------
+   Storskjerm / 16:9-modus – gjelder BARE poengtavla (.page.board), ikke
+   adminsiden. Hele tavla låses til 100vh uten scrolling; lag-radene deler
+   høyden likt (flex: 1 1 0), og teksten skaleres med vh/clamp().
+   Adminsiden (.page uten .board) er en helt vanlig, scrollbar side.
+--------------------------------------------------------------------------- */
+@media (min-width: 1024px) and (min-height: 560px) {
+  .page.board {
+    width: min(1840px, 95vw);
+    height: 100vh;
+    padding: clamp(8px, 1.5vh, 18px) 0 clamp(6px, 0.8vh, 10px);
+    display: flex;
+    flex-direction: column;
+    gap: clamp(5px, 0.7vh, 10px);
+    overflow: hidden;
+  }
+
+  .board .topbar {
+    flex: 0 0 auto;
+    margin: 0;
+    align-items: center;
+  }
+
+  .board .eyebrow {
+    margin-bottom: 2px;
+    font-size: clamp(10px, 1.2vh, 13px);
+  }
+
+  .board h1 {
+    font-size: clamp(24px, 4.4vh, 46px);
+  }
+
+  .board .prev-winner {
+    flex: 0 0 auto;
+    margin: 0;
+    padding: clamp(6px, 1.1vh, 12px) clamp(14px, 1.5vw, 20px);
+    font-size: clamp(12px, 1.6vh, 15px);
+  }
+
+  .board .prev-winner-ico {
+    font-size: clamp(15px, 2.1vh, 22px);
+  }
+
+  .board .leaderboard {
+    flex: 1 1 auto;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .board .section-header {
+    flex: 0 0 auto;
+    padding: clamp(7px, 1.2vh, 14px) clamp(16px, 1.8vw, 26px) clamp(5px, 0.8vh, 10px);
+  }
+
+  .board .section-header h2 {
+    font-size: clamp(16px, 2.2vh, 23px);
+  }
+
+  .board .section-header span {
+    margin-top: 2px;
+    font-size: clamp(10px, 1.25vh, 13px);
+  }
+
+  /* Total: tall + linje på én kompakt rad */
+  .board .total-bar {
+    flex: 0 0 auto;
+    align-items: center;
+    gap: clamp(14px, 1.8vw, 26px);
+    padding: clamp(5px, 0.8vh, 12px) clamp(16px, 1.8vw, 26px);
+  }
+
+  .board .total-bar-num strong {
+    font-size: clamp(24px, 3.4vh, 42px);
+  }
+
+  .board .total-bar-num span {
+    font-size: clamp(13px, 1.8vh, 20px);
+  }
+
+  .board .total-bar-cap {
+    margin-bottom: clamp(2px, 0.4vh, 6px);
+    font-size: clamp(10px, 1.25vh, 13px);
+  }
+
+  .board .total-bar .bar-track {
+    height: clamp(8px, 1.2vh, 14px);
+  }
+
+  .board .total-bar-scale {
+    height: clamp(9px, 1vh, 12px);
+    margin-top: clamp(2px, 0.4vh, 5px);
+    font-size: clamp(9px, 1vh, 11px);
+  }
+
+  .board .leaderboard-list {
+    flex: 1 1 auto;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    padding: clamp(5px, 0.7vh, 9px);
+    gap: clamp(4px, 0.6vh, 8px);
+    overflow: hidden;
+  }
+
+  .board .lb-row {
+    flex: 1 1 0;
+    min-height: 0;
+    overflow: hidden;
+    justify-content: center;
+    gap: clamp(3px, 0.7vh, 10px);
+    padding: clamp(4px, 0.8vh, 12px) clamp(14px, 1.5vw, 22px);
+  }
+
+  .board .lb-top {
+    gap: clamp(10px, 1.3vw, 18px);
+  }
+
+  .board .lb-rank {
+    width: clamp(30px, 3.9vh, 46px);
+    height: clamp(30px, 3.9vh, 46px);
+    border-radius: clamp(8px, 1.1vh, 13px);
+    font-size: clamp(14px, 1.9vh, 22px);
+  }
+
+  .board .lb-row.leader .lb-rank {
+    font-size: clamp(16px, 2.4vh, 28px);
+  }
+
+  .board .lb-name {
+    font-size: clamp(16px, 2.3vh, 30px);
+  }
+
+  .board .lb-points {
+    font-size: clamp(10px, 1.2vh, 13px);
+  }
+
+  .board .lb-points strong {
+    font-size: clamp(20px, 3vh, 40px);
+  }
+
+  /* De tre linjene ved siden av hverandre, ikke stablet */
+  .board .lb-bars {
+    flex-direction: row;
+    gap: clamp(14px, 1.8vw, 40px);
+  }
+
+  .board .lb-bars .mini-bar {
+    flex: 1 1 0;
+    min-width: 0;
+    grid-template-columns: clamp(50px, 5.5vw, 92px) 1fr clamp(34px, 3vw, 54px);
+    gap: clamp(8px, 0.9vw, 14px);
+  }
+
+  .board .mini-bar-l {
+    font-size: clamp(10px, 1.3vh, 14px);
+  }
+
+  .board .mini-bar .bar-track {
+    height: clamp(6px, 1.1vh, 12px);
+  }
+
+  .board .mini-bar-v {
+    font-size: clamp(13px, 1.9vh, 22px);
+  }
+}

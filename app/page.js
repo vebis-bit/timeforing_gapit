@@ -147,7 +147,7 @@ export default async function Home() {
   }
 
   return (
-    <main className="page">
+    <main className="page board">
       <header className="topbar">
         <div>
           <p className="eyebrow">Poengtavle</p>
