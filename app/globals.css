@@ -277,7 +277,7 @@ h2 {
 
 .bar-fill.reached {
   background: linear-gradient(90deg, var(--good), #8affc6);
-  box-shadow: 0 0 16px color-mix(in srgb, var(--good) 55%, transparent);
+  box-shadow: 0 0 8px color-mix(in srgb, var(--good) 45%, transparent);
 }
 
 .bar-fill.none {

@@ -25,6 +25,11 @@ føre timer i tide. Lag styres fra en adminside.
 - **Forrige måneds vinner** vises som en egen stripe (🏆), regnet ut fra dagens
   lagsammensetning.
 
+Utseendet er et mørkt «dashboard»-tema (Sora/Inter fra Google Fonts, gradient-
+aksenter, gull for poeng/leder, grønt når 80 %-målet er nådd). Alt ligger i
+`app/globals.css`; framdriftslinjene er `TotalBar` / `MiniBar` / `Track` i
+`app/page.js`.
+
 Kode: `app/lib/score.js` – ett `/timesheet/entry`-kall dekker forrige + inneværende
 måned, og tallies for måned / uke / i går / forrige måned. Caches i 10 minutter.
 Session-token lages med `createSessionToken()` (cachet ~55 min).
