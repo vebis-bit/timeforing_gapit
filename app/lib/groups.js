@@ -1,11 +1,14 @@
 import { randomUUID } from "node:crypto";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
-import { list, put } from "@vercel/blob";
+import { get, put } from "@vercel/blob";
 
 const DATA_DIR = path.join(process.cwd(), "data");
 const GROUPS_FILE = path.join(DATA_DIR, "groups.json");
 const BLOB_PATH = "groups.json";
+// Storen er satt opp med privat tilgang: blob-en er ikke lesbar via en offentlig
+// URL, og lesing må gå gjennom get() med samme token.
+const BLOB_ACCESS = "private";
 
 // På Vercel er filsystemet skrivebeskyttet i produksjon, så gruppene lagres i
 // Vercel Blob når et Blob-token finnes (injiseres automatisk når en Blob-store
@@ -88,19 +91,22 @@ async function writeToFile(data) {
 }
 
 async function readFromBlob() {
-  const { blobs } = await list({ prefix: BLOB_PATH, token: blobToken });
-  const match = blobs.find((blob) => blob.pathname === BLOB_PATH);
-  if (!match) return { ...EMPTY };
-  const response = await fetch(match.url, { cache: "no-store" });
-  if (!response.ok) {
-    throw new Error(`Klarte ikke å lese grupper fra Blob (${response.status}).`);
+  let result;
+  try {
+    result = await get(BLOB_PATH, { access: BLOB_ACCESS, useCache: false, token: blobToken });
+  } catch (error) {
+    if (error?.name === "BlobNotFoundError") return { ...EMPTY };
+    throw error;
   }
-  return normalize(await response.json());
+  if (!result || !result.stream) return { ...EMPTY };
+  const text = await new Response(result.stream).text();
+  if (!text.trim()) return { ...EMPTY };
+  return normalize(JSON.parse(text));
 }
 
 async function writeToBlob(data) {
   await put(BLOB_PATH, `${JSON.stringify(data, null, 2)}\n`, {
-    access: "public",
+    access: BLOB_ACCESS,
     contentType: "application/json",
     addRandomSuffix: false,
     allowOverwrite: true,
