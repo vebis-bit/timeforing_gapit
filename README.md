@@ -26,6 +26,11 @@ føre timer i tide. Lag styres fra en adminside.
 - **Forrige måneds vinner** vises som en egen stripe (🏆), regnet ut fra dagens
   lagsammensetning.
 - Topplinja viser Gapit Nordics-logoen (`app/BrandMark.js`), ikke ren tekst.
+- **Månedsvelger** ved siden av admin-knappen (`app/MonthPicker.js`): velg en av
+  de 12 foregående månedene for å se den ferdige statistikken for den måneden
+  (`?month=YYYY-MM`). Da telles hele måneden, «Denne uka»/«I går» skjules, og
+  `score.js` henter målmåneden + måneden før (for sammenlikningsstreken).
+  «Denne måneden» = ren forside, live.
 
 Utseendet følger Gapit Nordics' merkevareguide (Design System V2): light mode,
 Poppins fra Google Fonts, Electric Blue (`#1570EF`, Primary/600) på alt
