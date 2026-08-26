@@ -1,0 +1,19 @@
+services:
+  web:
+    build: .
+    image: gapit-timestatistikk
+    container_name: gapit-timestatistikk
+    ports:
+      - "3000:3000"
+    # Miljøvariabler (Tripletex-tokens, admin-passord, evt. BLOB_READ_WRITE_TOKEN).
+    # Kopier .env.example -> .env.local og fyll inn før første start.
+    env_file:
+      - .env.local
+    # Lager for grupper når Vercel Blob IKKE er satt opp. Med Blob-token i
+    # .env.local brukes Blob i stedet, og dette volumet er uten betydning.
+    volumes:
+      - gapit-data:/app/data
+    restart: unless-stopped
+
+volumes:
+  gapit-data:

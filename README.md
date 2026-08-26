@@ -45,9 +45,10 @@ likt (`flex: 1 1 0`), og all tekst skaleres med `vh`/`clamp()` så den holder se
 lesbar. Testet med 4–8 lag på 1920×1080 og 1366×768. Adminsiden bruker `.page`
 uten `.board` og er en helt vanlig, scrollbar side.
 
-Kode: `app/lib/score.js` – ett `/timesheet/entry`-kall dekker forrige + inneværende
-måned, og tallies for måned / uke / i går / forrige måned. Caches i 10 minutter.
-Session-token lages med `createSessionToken()` (cachet ~55 min).
+Kode: `app/lib/score.js` – ett `/timesheet/entry`-kall dekker målmåneden +
+måneden før, og tallies for måned / uke / i går / forrige måned. Caches i 10
+minutter (én nøkkel per måned). Session-token lages med `createSessionToken()`
+(cachet ~55 min).
 
 `GET /api/time-stats` finnes fortsatt som et JSON-endepunkt for plusstid i går per
 ansatt (`app/lib/timestats.js`), men vises ikke lenger på forsiden.
@@ -103,18 +104,10 @@ tokenet et prefiks (`<store>_BLOB_READ_WRITE_TOKEN`); koden godtar hvilken som
 helst variabel som slutter på `BLOB_READ_WRITE_TOKEN`, men helst bør du ha
 nøyaktig én store med tomt prefiks.
 
-## Lokal kjøring
-
-```bash
-cd tripletex-timestatistikk
-cp .env.example .env.local   # fyll inn ekte verdier
-npm install
-npm run dev
-```
-
-Åpne `http://localhost:3000`. Adminside: `http://localhost:3000/admin`.
-
 ## Miljøvariabler
+
+Kopier `.env.example` til `.env.local` og fyll inn. De samme variablene brukes
+lokalt, i Docker og på Vercel.
 
 ```text
 TRIPLETEX_CONSUMER_TOKEN
@@ -124,5 +117,95 @@ TRIPLETEX_API_BASE             # https://tripletex.no/v2
 ADMIN_USERNAME
 ADMIN_PASSWORD
 ADMIN_SESSION_SECRET          # lang tilfeldig streng
-BLOB_READ_WRITE_TOKEN        # settes automatisk av Vercel Blob; utelates lokalt
+BLOB_READ_WRITE_TOKEN         # settes automatisk av Vercel Blob; utelat for fil-lager
+```
+
+## Oppstart – lokalt (uten Docker)
+
+```bash
+cd tripletex-timestatistikk
+cp .env.example .env.local     # 1. fyll inn ekte verdier
+npm install                    # 2. installer avhengigheter
+npm run dev                    # 3. start utviklingsserver
+```
+
+Åpne `http://localhost:3000`. Adminside: `http://localhost:3000/admin`.
+Produksjonsbygg lokalt: `npm run build && npm run start`.
+
+## Oppstart – Docker
+
+Krever Docker med Compose. `next.config.mjs` har `output: "standalone"`, og
+`Dockerfile` er et flertrinnsbygg som gir et lite image (kun standalone-serveren,
+ingen `node_modules`).
+
+```bash
+cd tripletex-timestatistikk
+cp .env.example .env.local        # 1. fyll inn ekte verdier
+docker compose build              # 2. bygg imaget
+docker compose up -d              # 3. start containeren i bakgrunnen
+```
+
+Appen kjører på `http://localhost:3000`. Nyttige kommandoer:
+
+```bash
+docker compose logs -f            # følg loggen
+docker compose restart            # start på nytt
+docker compose down               # stopp og fjern containeren
+docker compose up -d --build      # bygg på nytt og start (etter kodeendring)
+```
+
+**Lagring av grupper i Docker:** uten `BLOB_READ_WRITE_TOKEN` skrives gruppene til
+det navngitte volumet `gapit-data` (montert på `/app/data`), som overlever
+`down`/`up`. Se innholdet med
+`docker compose exec web cat data/groups.json`. Med et Blob-token i `.env.local`
+brukes Vercel Blob i stedet, og volumet er uten betydning. Uten begge deler
+nullstilles gruppene når containeren bygges på nytt.
+
+Kjøre uten Compose:
+
+```bash
+docker build -t gapit-timestatistikk .
+docker run -d -p 3000:3000 --env-file .env.local \
+  -v gapit-data:/app/data --name gapit gapit-timestatistikk
+```
+
+## Prosjektstruktur
+
+```text
+app/                       Next.js App Router – hele applikasjonen
+  layout.js                Rot-layout: laster globals.css, setter <html lang="no">
+  page.js                  Forsiden: henter poeng, bygger de tre rangeringskolonnene + totallinje
+  globals.css              All styling: Gapit-fargevariabler, komponenter, responsivt + 16:9-modus
+  BrandMark.js             Gapit Nordics-logoen (symbol + ordmerke + undertittel) som inline markup
+  MonthPicker.js           Klientkomponent: nedtrekk i topplinja for å velge en tidligere måned
+  admin/
+    page.js                /admin: viser innlogging eller gruppeadministrasjon
+    LoginForm.js            Klientskjema for admin-innlogging
+    AdminGroups.js          Klient: opprett/endre grupper, sett kaptein, «autofyll tilfeldig»
+  api/
+    admin/login/route.js    POST: sjekker brukernavn/passord, setter signert cookie
+    admin/logout/route.js   POST: sletter sesjonscookien
+    admin/groups/route.js   GET/PUT: les og lagre grupper (Blob eller fil), kun innlogget
+    admin/employees/route.js GET: aktive/inaktive ansatte fra Tripletex, kun innlogget
+    time-stats/route.js     GET: JSON med plusstid i går per ansatt (ikke i bruk på forsiden)
+  lib/
+    tripletex.js            Tripletex-klient: sesjonstoken, paginering, Oslo-datoer, retry
+    auth.js                 Admin-cookie: signering/verifisering og isAdmin()
+    groups.js               Lagring av grupper: Vercel Blob i prod, data/groups.json lokalt
+    employees.js            Henter ansatte + arbeidsforhold, markerer inaktive
+    timestats.js            Plusstid i går: registrerte timer − 7,5 × stillingsandel
+    holidays.js             Norske helligdager (isRedDay), brukt til å hoppe over røde dager
+    score.js                Poengmodellen: henter føringer og teller «i tide» per periode/måned
+data/
+  groups.json              Gruppene – lokalt fallback-lager når Blob ikke er satt opp
+next.config.mjs            Next-konfig; output: "standalone" for Docker
+Dockerfile                 Flertrinnsbygg → lite standalone-image
+docker-compose.yml         Bygg + kjør med .env.local og volum for data/
+.dockerignore              Hva som holdes utenfor Docker-byggekonteksten
+vercel.json                Vercel: framework = nextjs
+.env.example               Mal for miljøvariabler
+.env.local                 Dine faktiske hemmeligheter (ikke i git)
+package.json               Avhengigheter og npm-skript (dev/build/start)
+AGENTS.md / CLAUDE.md      Notater til AI-verktøy (AGENTS.md skrives av `next dev`)
+README.md                  Denne fila
 ```
