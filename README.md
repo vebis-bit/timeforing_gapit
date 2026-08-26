@@ -134,9 +134,14 @@ Produksjonsbygg lokalt: `npm run build && npm run start`.
 
 ## Oppstart – Docker
 
-Krever Docker med Compose. `next.config.mjs` har `output: "standalone"`, og
-`Dockerfile` er et flertrinnsbygg som gir et lite image (kun standalone-serveren,
-ingen `node_modules`).
+`next.config.mjs` har `output: "standalone"`, og `Dockerfile` er et
+flertrinnsbygg som gir et lite image (kun standalone-serveren, ingen
+`node_modules`).
+
+> **Compose-kommandoen:** nyere Docker bruker `docker compose` (mellomrom), eldre
+> oppsett `docker-compose` (bindestrek). Bytt ut i eksemplene under om du får
+> `unknown command: docker compose`. Har du ikke Compose i det hele tatt, bruk
+> «uten Compose» nederst.
 
 ```bash
 cd tripletex-timestatistikk
@@ -161,12 +166,15 @@ det navngitte volumet `gapit-data` (montert på `/app/data`), som overlever
 brukes Vercel Blob i stedet, og volumet er uten betydning. Uten begge deler
 nullstilles gruppene når containeren bygges på nytt.
 
-Kjøre uten Compose:
+Kjøre uten Compose (samme resultat, trenger bare `docker`):
 
 ```bash
 docker build -t gapit-timestatistikk .
 docker run -d -p 3000:3000 --env-file .env.local \
   -v gapit-data:/app/data --name gapit gapit-timestatistikk
+
+docker logs -f gapit              # følg loggen
+docker stop gapit && docker rm gapit   # stopp og fjern
 ```
 
 ## Prosjektstruktur
