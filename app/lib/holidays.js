@@ -1,5 +1,8 @@
 // Norske røde dager (bevegelige + faste). Julaften/nyttårsaften regnes ikke med.
+// Brukes til å hoppe over dager ingen forventes å føre timer (helg + helligdag).
 
+// Dato for 1. påskedag et gitt år (gregoriansk Computus / "Anonymous Gregorian
+// algorithm"). Alle de bevegelige helligdagene regnes ut fra denne.
 function easterSunday(year) {
   // Anonymous Gregorian algorithm (Computus).
   const a = year % 19;
@@ -19,16 +22,20 @@ function easterSunday(year) {
   return new Date(Date.UTC(year, month - 1, day));
 }
 
+// "YYYY-MM-DD" fra et Date-objekt (UTC).
 function iso(date) {
   return date.toISOString().slice(0, 10);
 }
 
+// Ny dato `days` dager fram/tilbake.
 function addDays(date, days) {
   return new Date(date.getTime() + days * 24 * 60 * 60 * 1000);
 }
 
+// year -> Set med "YYYY-MM-DD" for alle helligdager det året. Regnes én gang per år.
 const holidayCache = new Map();
 
+// Set med alle norske helligdager (faste + påske-/pinserelaterte) for et år.
 function holidaysForYear(year) {
   if (holidayCache.has(year)) return holidayCache.get(year);
   const easter = easterSunday(year);

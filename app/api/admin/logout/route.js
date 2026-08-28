@@ -1,3 +1,5 @@
+// POST /api/admin/logout – sletter sesjonscookien.
+
 import { cookies } from "next/headers";
 import { COOKIE_NAME } from "../../../lib/auth";
 

@@ -1,8 +1,12 @@
+// /api/admin/groups – GET leser gruppene fra data/groups.json, PUT lagrer hele
+// lista (body { groups: [...] }). Begge krever gyldig admin-sesjon.
+
 import { isAdmin } from "../../../lib/auth";
 import { readGroups, writeGroups } from "../../../lib/groups";
 
 export const dynamic = "force-dynamic";
 
+// GET: returner { groups: [...] }.
 export async function GET() {
   if (!(await isAdmin())) {
     return Response.json({ error: "Ikke innlogget." }, { status: 401 });
@@ -15,6 +19,7 @@ export async function GET() {
   }
 }
 
+// PUT: valider body, normaliser og skriv til disk, returner det lagrede.
 export async function PUT(request) {
   if (!(await isAdmin())) {
     return Response.json({ error: "Ikke innlogget." }, { status: 401 });

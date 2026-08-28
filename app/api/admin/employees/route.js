@@ -1,3 +1,6 @@
+// GET /api/admin/employees – ansattlista fra Tripletex som { employees: [{ id,
+// name, active }] }. Krever admin-sesjon. Brukes av gruppe-editoren.
+
 import { isAdmin } from "../../../lib/auth";
 import { listEmployees } from "../../../lib/employees";
 

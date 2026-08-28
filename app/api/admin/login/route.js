@@ -1,3 +1,6 @@
+// POST /api/admin/login – body { username, password }. Rett innlogging => sett
+// signert httpOnly-sesjonscookie og { ok: true }. Feil => 401.
+
 import { cookies } from "next/headers";
 import {
   COOKIE_NAME,

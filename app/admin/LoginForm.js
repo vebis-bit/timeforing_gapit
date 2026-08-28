@@ -1,3 +1,7 @@
+// Innloggingsskjema for /admin. Vises av admin/page.js når det ikke finnes en
+// gyldig sesjon. Ved suksess settes cookien av API-et, og router.refresh() får
+// serveren til å rendre gruppe-editoren i stedet.
+
 "use client";
 
 import { useRouter } from "next/navigation";
@@ -10,6 +14,7 @@ export default function LoginForm() {
   const [error, setError] = useState(null);
   const [busy, setBusy] = useState(false);
 
+  // POST brukernavn/passord til /api/admin/login. 200 => refresh; feil => vis melding.
   async function onSubmit(event) {
     event.preventDefault();
     setBusy(true);

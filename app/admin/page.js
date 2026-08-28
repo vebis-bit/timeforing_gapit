@@ -1,3 +1,6 @@
+// /admin – server-komponent. Sjekker sesjonscookien og viser enten
+// innloggingsskjemaet (LoginForm) eller gruppe-editoren (AdminGroups).
+
 import Link from "next/link";
 import BrandMark from "../BrandMark";
 import { isAdmin } from "../lib/auth";

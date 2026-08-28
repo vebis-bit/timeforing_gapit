@@ -1,3 +1,6 @@
+// Rot-layout for hele appen. Laster global CSS og setter <html lang="no">.
+// Alle sider (forsiden + /admin) rendres inne i <body>.
+
 import "./globals.css";
 
 export const metadata = {

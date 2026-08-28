@@ -1,6 +1,11 @@
+// Henter ansattlista fra Tripletex og avgjør hvem som er aktive «i går».
+// Brukes av adminsiden (for å plassere folk i grupper) og indirekte for å vite
+// hvilke ansatte som teller.
+
 import { employeeName, fetchPaged, toNumber, yesterdayInOslo } from "./tripletex";
 
 const CACHE_TTL_MS = 10 * 60 * 1000;
+// { at, data } – siste resultat fra listEmployees(). Deles av alle kall.
 let cache = null;
 
 // Finn arbeidsforholdet som dekker datoen, og les stillingsandel (1 = 100 %).
@@ -18,6 +23,8 @@ function employmentInfo(employee, date) {
   return { active: true, fraction: percent > 0 ? percent / 100 : 1 };
 }
 
+// Rå ansattliste fra Tripletex, med arbeidsforhold utvidet i samme kall. Faller
+// tilbake til en enkel liste hvis feltutvidelsen feiler.
 async function fetchRaw() {
   try {
     return await fetchPaged("/employee", {
@@ -30,7 +37,11 @@ async function fetchRaw() {
   }
 }
 
-/** [{ id, name, active, fraction }] for alle ansatte. Cachet i 10 minutter. */
+/**
+ * [{ id, name, active, fraction }] for alle ansatte, sortert på navn.
+ * `active` = har et arbeidsforhold som dekker i går. `fraction` = stillingsandel.
+ * Cachet i 10 minutter. `force: true` hopper over cachen.
+ */
 export async function listEmployees({ force = false } = {}) {
   if (!force && cache && Date.now() - cache.at < CACHE_TTL_MS) return cache.data;
   const date = yesterdayInOslo();

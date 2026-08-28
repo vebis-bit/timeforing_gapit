@@ -1,3 +1,8 @@
+// Forsiden = poengtavla. Server-komponent: henter poeng (score.js) og grupper
+// (groups.json), regner ut tre uavhengige lag-rangeringer (i går / denne uka /
+// måneden) pluss totallinja "andel ført i tide", og tegner alt. Kjøres på hver
+// forespørsel (force-dynamic). ?month=YYYY-MM viser en ferdig, tidligere måned.
+
 import Link from "next/link";
 import BrandMark from "./BrandMark";
 import MonthPicker from "./MonthPicker";
@@ -7,14 +12,16 @@ import { getRegistrationScore, scoreForMembers } from "./lib/score";
 import { osloDateParts } from "./lib/tripletex";
 
 const MEDALS = ["🥇", "🥈", "🥉"];
-const PUNCTUALITY_GOAL = 80;
+const PUNCTUALITY_GOAL = 80; // målet framdriftslinjene måler mot
 
 export const dynamic = "force-dynamic";
 
+// Klem `value` til [min, max].
 function clamp(value, min, max) {
   return Math.min(max, Math.max(min, value));
 }
 
+// Avrund til et helt prosenttall i [0, 100]. null => 0.
 function pctOf(value) {
   return value == null ? 0 : clamp(Math.round(value), 0, 100);
 }
@@ -78,7 +85,8 @@ function TotalBar({ value, prevValue }) {
   );
 }
 
-// Én rad i en av de tre rangeringene.
+// Én rad i en av de tre rangeringene: plassering (👑/🥇🥈🥉/tall), lagnavn, poeng.
+// `periodKey` velger hvilken periode (month/week/yesterday) tallene hentes fra.
 function RankRow({ entry, index, periodKey }) {
   const stat = entry[periodKey];
   const isLeader = index === 0 && stat.points > 0;
@@ -95,7 +103,8 @@ function RankRow({ entry, index, periodKey }) {
   );
 }
 
-// Én kolonne = én likestilt rangering (i går / uka / måneden).
+// Én kolonne = én likestilt rangering (i går / uka / måneden). `entries` er
+// allerede sortert på poeng for perioden.
 function RankColumn({ title, subtitle, entries, periodKey }) {
   return (
     <div className="rank-col">
@@ -133,6 +142,8 @@ function monthChoices() {
   return list;
 }
 
+// Server-komponent for forsiden. `searchParams.month` ("YYYY-MM") velger måned;
+// ugyldig / inneværende / framtidig verdi ignoreres.
 export default async function Home({ searchParams }) {
   const admin = await isAdmin();
 
@@ -161,6 +172,7 @@ export default async function Home({ searchParams }) {
   let prevPunctuality = null;
 
   if (score) {
+    // Ett rad-objekt per gruppe med sammenlagte medlemstall for hver periode.
     const rows = groups.map((group) => {
       const memberIds = group.memberIds.map(String);
       return {
@@ -185,6 +197,7 @@ export default async function Home({ searchParams }) {
     weekRanked = rankBy("week");
     yesterdayRanked = rankBy("yesterday");
 
+    // Vinneren av forrige måned – vises som en egen stripe over tavla.
     const prevRanked = rows
       .filter((row) => row.prev && row.prev.points > 0)
       .sort((a, b) => b.prev.points - a.prev.points);
@@ -196,6 +209,8 @@ export default async function Home({ searchParams }) {
       };
     }
 
+    // Total "andel ført i tide" på tvers av alle grupper, for denne måneden og
+    // forrige måned (streken på totallinja).
     const tW = rows.reduce((n, r) => n + r.month.workedDays, 0);
     const tO = rows.reduce((n, r) => n + r.month.onTimeDays, 0);
     totalPunctuality = tW > 0 ? (tO / tW) * 100 : null;

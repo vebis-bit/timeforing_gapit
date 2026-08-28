@@ -1,14 +1,21 @@
+// Gruppe-editoren på /admin (klientkomponent). Henter grupper + ansatte fra
+// API-et, lar admin opprette/endre/slette grupper, flytte folk, sette kaptein og
+// "autofylle" tilfeldig. Hver endring lagres umiddelbart med PUT /api/admin/groups
+// (navneendring debounces 600 ms). Lokal state er sannheten mens man redigerer;
+// serveren returnerer den normaliserte versjonen etter hver lagring.
+
 "use client";
 
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 
+// Ny gruppe-id: crypto.randomUUID når tilgjengelig, ellers en enkel fallback.
 function newId() {
   if (typeof crypto !== "undefined" && crypto.randomUUID) return crypto.randomUUID();
   return `g-${Date.now()}-${Math.random().toString(16).slice(2)}`;
 }
 
-// Navn til autogenererte grupper.
+// Navn til autogenererte grupper (norske dyr i flertall). Brukes av autofyll.
 const NAME_POOL = [
   "Bjørnene",
   "Ulvene",
@@ -36,6 +43,7 @@ const NAME_POOL = [
   "Lirypene"
 ];
 
+// Kopi av lista i tilfeldig rekkefølge (Fisher–Yates).
 function shuffle(list) {
   const a = [...list];
   for (let i = a.length - 1; i > 0; i--) {
@@ -55,6 +63,8 @@ export default function AdminGroups() {
   const [groupCount, setGroupCount] = useState(3);
   const saveTimer = useRef(null);
 
+  // Førstegangs-lasting: hent grupper og ansattliste parallelt. `cancelled`
+  // hindrer state-oppdatering hvis komponenten er avmontert før svaret kommer.
   useEffect(() => {
     let cancelled = false;
     async function load() {
@@ -82,12 +92,16 @@ export default function AdminGroups() {
     };
   }, []);
 
+  // Oppslag id -> ansatt, for å vise navn/aktiv-status i medlemslistene.
   const employeeById = useMemo(() => {
     const map = new Map();
     for (const employee of employees) map.set(String(employee.id), employee);
     return map;
   }, [employees]);
 
+  // Sett ny gruppetilstand lokalt OG lagre den til serveren. `debounce: true`
+  // venter 600 ms (brukes ved skriving i navnefeltet). Serverens normaliserte
+  // svar overtar som ny state når lagringen er ferdig.
   function persist(next, { debounce = false } = {}) {
     setGroups(next);
     setStatus("Lagrer …");
@@ -140,10 +154,12 @@ export default function AdminGroups() {
     persist(next);
   }
 
+  // Slett en gruppe.
   function deleteGroup(id) {
     persist(groups.filter((group) => group.id !== id));
   }
 
+  // Endre gruppenavn. Debounces så vi ikke lagrer på hvert tastetrykk.
   function renameGroup(id, name) {
     persist(
       groups.map((group) => (group.id === id ? { ...group, name } : group)),
@@ -151,6 +167,7 @@ export default function AdminGroups() {
     );
   }
 
+  // Legg en ansatt inn i en gruppe.
   function addMember(groupId, employeeId) {
     if (!employeeId) return;
     // En person kan bare være i én gruppe – ignorer hvis alt er plassert et sted.
@@ -164,6 +181,7 @@ export default function AdminGroups() {
     );
   }
 
+  // Fjern en ansatt fra en gruppe. Var personen kaptein, nulles kapteinen.
   function removeMember(groupId, employeeId) {
     persist(
       groups.map((group) =>
@@ -178,6 +196,7 @@ export default function AdminGroups() {
     );
   }
 
+  // Sett/fjern kaptein i en gruppe (klikk på samme person igjen = fjern).
   function setCaptain(groupId, employeeId) {
     persist(
       groups.map((group) =>
@@ -188,6 +207,7 @@ export default function AdminGroups() {
     );
   }
 
+  // Logg ut og oppdater sida (serveren rendrer da innloggingsskjemaet).
   async function logout() {
     await fetch("/api/admin/logout", { method: "POST" });
     router.refresh();
@@ -195,6 +215,8 @@ export default function AdminGroups() {
 
   if (loading) return <p className="empty">Laster …</p>;
 
+  // Avledet visningsdata: alle plasserte id-er, antall aktive, og hvem som ennå
+  // ikke er i en gruppe (kun aktive – inaktive tilbys ikke for plassering).
   const assignedIds = new Set(groups.flatMap((g) => g.memberIds.map(String)));
   const activeCount = employees.filter((employee) => employee.active !== false).length;
   const ungrouped = employees.filter(
