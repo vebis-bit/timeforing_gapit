@@ -7,9 +7,21 @@ export const cookieOptions = {
   httpOnly: true,
   sameSite: "lax",
   path: "/",
-  maxAge: 60 * 60 * 8,
-  secure: process.env.NODE_ENV === "production"
+  maxAge: 60 * 60 * 8
 };
+
+// `Secure` bare når forespørselen faktisk kom inn over HTTPS. Ellers ville en
+// container kjørt over vanlig http (localhost / LAN uten TLS-proxy) sende en
+// Secure-cookie som nettleseren forkaster – da blir man stående på «Logger inn …».
+export function isHttpsRequest(request) {
+  const proto = request.headers.get("x-forwarded-proto");
+  if (proto) return proto.split(",")[0].trim() === "https";
+  try {
+    return new URL(request.url).protocol === "https:";
+  } catch {
+    return false;
+  }
+}
 
 function sessionSecret() {
   return (

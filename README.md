@@ -84,7 +84,9 @@ Gruppene lagres i volumet `gapit-data` (`/app/data` i containeren), som overleve
 | `next.config.mjs` | Next-konfig. `output: "standalone"` for Docker-imaget. |
 | `run.sh` | Ett-kommando oppstart i Docker: lager `.env.local`, bygger og starter. |
 | `Dockerfile` | Flertrinns Docker-bygg → lite standalone-image med alle pakker. |
+| `docker-entrypoint.sh` | Kjører som root: fikser eierskap på `/app/data`-volumet, seeder tom `groups.json`, dropper så til `node`. |
 | `docker-compose.yml` | Bygg + kjør med `.env.local`, volum for gruppene, healthcheck. |
+| `fly.toml` | Klar Fly.io-konfig: port 3000, `/app/data`-volum, helsesjekk. |
 | `.dockerignore` | Hva som holdes utenfor Docker-byggekonteksten. |
 | `.env.example` | Mal for miljøvariabler. Kopieres til `.env.local`. |
 | `.gitignore` | Ignorerte filer (`node_modules`, `.next`, `.env.local`, …). |

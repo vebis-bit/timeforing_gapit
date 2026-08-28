@@ -1,0 +1,42 @@
+# Fly.io – kjører Docker-imaget med et varig volum for data/groups.json.
+# Full oppskrift står i README ("Metode A – container-host").
+#
+#   fly launch --no-deploy --copy-config      # les denne fila, opprett appen
+#   fly volumes create gapit_data --region arn --size 1
+#   fly secrets set TRIPLETEX_CONSUMER_TOKEN=... TRIPLETEX_EMPLOYEE_TOKEN=... \
+#       TRIPLETEX_PROXY_COMPANY_ID=0 TRIPLETEX_API_BASE=https://tripletex.no/v2 \
+#       ADMIN_USERNAME=admin ADMIN_PASSWORD=... ADMIN_SESSION_SECRET=$(openssl rand -hex 32)
+#   fly deploy
+
+app = "gapit-timestatistikk"       # må være globalt unikt – endre ved behov
+primary_region = "arn"             # Stockholm, nærmest Norge
+
+[build]
+
+[env]
+  NEXT_TELEMETRY_DISABLED = "1"
+  PORT = "3000"
+
+[http_service]
+  internal_port = 3000
+  force_https = true
+  auto_stop_machines = "off"
+  auto_start_machines = false
+  min_machines_running = 1
+
+  [[http_service.checks]]
+    method = "GET"
+    path = "/"
+    interval = "30s"
+    timeout = "5s"
+    grace_period = "20s"
+
+# Varig disk for data/groups.json. Volumet er tomt ved opprettelse; entrypointet
+# i imaget fikser eierskap og seeder en tom groups.json.
+[mounts]
+  source = "gapit_data"
+  destination = "/app/data"
+
+[[vm]]
+  size = "shared-cpu-1x"
+  memory = "512mb"

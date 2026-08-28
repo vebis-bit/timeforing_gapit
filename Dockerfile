@@ -20,7 +20,7 @@ RUN npm run build
 
 # ---------- 3. Kjøring ----------
 FROM node:22-alpine AS runner
-RUN apk add --no-cache libc6-compat
+RUN apk add --no-cache libc6-compat su-exec
 WORKDIR /app
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
@@ -33,6 +33,11 @@ COPY --from=builder --chown=node:node /app/.next/static ./.next/static
 # Startverdier for grupper (overstyres av volumet montert på /app/data)
 COPY --from=builder --chown=node:node /app/data ./data
 
-USER node
+# Entrypoint kjører som root: fikser eierskap på volumet /app/data og dropper
+# så til 'node' før serveren startes. Se docker-entrypoint.sh.
+COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
+RUN chmod +x /usr/local/bin/docker-entrypoint.sh
+
 EXPOSE 3000
+ENTRYPOINT ["docker-entrypoint.sh"]
 CMD ["node", "server.js"]

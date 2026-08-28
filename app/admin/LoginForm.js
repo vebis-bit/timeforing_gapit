@@ -27,6 +27,9 @@ export default function LoginForm() {
       router.refresh();
     } catch (caught) {
       setError(caught.message);
+    } finally {
+      // Nullstill alltid, så knappen ikke blir stående på «Logger inn …» hvis
+      // refresh av en eller annen grunn ikke bytter til admin-visningen.
       setBusy(false);
     }
   }

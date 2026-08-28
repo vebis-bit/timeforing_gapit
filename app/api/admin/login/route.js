@@ -1,5 +1,11 @@
 import { cookies } from "next/headers";
-import { COOKIE_NAME, checkCredentials, cookieOptions, sessionValue } from "../../../lib/auth";
+import {
+  COOKIE_NAME,
+  checkCredentials,
+  cookieOptions,
+  isHttpsRequest,
+  sessionValue
+} from "../../../lib/auth";
 
 export const dynamic = "force-dynamic";
 
@@ -12,6 +18,6 @@ export async function POST(request) {
   }
 
   const store = await cookies();
-  store.set(COOKIE_NAME, sessionValue(), cookieOptions);
+  store.set(COOKIE_NAME, sessionValue(), { ...cookieOptions, secure: isHttpsRequest(request) });
   return Response.json({ ok: true });
 }
